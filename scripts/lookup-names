@@ -4,7 +4,7 @@ import argparse
 from eulxml.xmlmap import load_xmlobject_from_file
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
 
-import spotlight
+from namedropper import spotlight
 
 
 # TODO: may want to set up a local mirror of dbpedia spotlight,
