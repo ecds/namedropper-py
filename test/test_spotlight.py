@@ -45,6 +45,18 @@ class SpotlightClientTest(unittest.TestCase):
         self.assertEqual(support, client.default_support)
         self.assertEqual(','.join(types), client.default_types)
 
+    def test_clean_response(self, mockrequests):
+        client = SpotlightClient()
+        cleaned_data = client._clean_response(self.sample_result)
+
+        self.assert_('text' in cleaned_data)
+        self.assert_('@text' not in cleaned_data)
+        self.assert_('types' in cleaned_data)
+        self.assert_('@types' not in cleaned_data)
+        self.assert_('URI' in cleaned_data['Resources'][0])
+        self.assert_('@support' not in cleaned_data['Resources'][0])
+
+
     def test_annotate(self, mockrequests):
         client = SpotlightClient()
 
