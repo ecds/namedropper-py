@@ -9,6 +9,13 @@ class SpotlightClient(object):
 
     http://wiki.dbpedia.org/spotlight/usersmanual?v=ssd
 
+    :param base_url: Base URL for DBpedia Spotlight webservice, when
+        not using the hosted service at :attr:`default_url`
+    :param confidence: default minimum confidence score (optional)
+    :param support: default minimum support score (optional)
+    :param types: list or string of default types to be returned
+        when recognizing and annotating text
+
     '''
 
     default_url = 'http://spotlight.dbpedia.org/rest'
@@ -32,6 +39,20 @@ class SpotlightClient(object):
         self.default_types = types
 
     def annotate(self, text, confidence=None, support=None, types=None):
+        '''Call the DBpedia Spotlight ``annotate`` service.
+
+        All arguments other than text are optional; if default configurations
+        were specified when the client was initialized, those will be used
+        unless an overriding value is specified here.
+
+        :param text: text string to be annotated
+        :param confidence: minimum confidence score (e.g., 0.5) [optional]
+        :param support: minimum support score [optional]
+        :param types: list or string of entity types that should
+            be recognized and returned (such as Person, Place, Organization) [optional]
+
+        :returns: dict with information on identified resources
+        '''
         # types e.g., 'Person,Place'  or ['Person', 'Place']
         annotate_url = '%s/annotate' % self.base_url
         data = {'text': text}
@@ -55,13 +76,9 @@ class SpotlightClient(object):
         elif self.default_types:
             data['types'] = self.default_types
 
-        response = self._call(annotate_url, data=data,
+        response = self._call(requests.post, annotate_url, data=data,
             headers={'accept': 'application/json',
                     'content-type': 'application/x-www-form-urlencoded'})
-
-        # response = requests.post(annotate_url, data=data,
-        #     headers={'accept': 'application/json',
-        #             'content-type': 'application/x-www-form-urlencoded'})
         # # API docs suggest using POST instead of GET for large text content;
         # for POST, a content-type of application/x-www-form-urlencoded is required
 
@@ -81,13 +98,13 @@ class SpotlightClient(object):
         ':class:`datetime.timedelta` - total duration of all API calls'
         return sum(self._api_calls, timedelta())
 
-    def _call(self, url, **kwargs):
+    def _call(self, method, *args, **kwargs):
         # wrapper around request to allow keeping track of number
         # and duration of api calls
         start = datetime.now()
-        response = requests.post(url, **kwargs)
+        result = method(*args, **kwargs)
         self._api_calls.append(datetime.now() - start)
-        return response
+        return result
 
     def _clean_response(self, data):
         '''Recursive function to clean up DBPedia Spotlight JSON result,
