@@ -1,3 +1,4 @@
 mock
 sphinx
 coverage
+unittest-xml-reporting
