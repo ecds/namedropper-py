@@ -16,6 +16,8 @@ class LookupNames(object):
 
     _queried_text = set()
 
+    _unique_names = set()
+
     def __init__(self):
         # parse command-line arguments and init spotlight client
         parser = argparse.ArgumentParser(description='Look up named entities in a file.')
@@ -24,6 +26,8 @@ class LookupNames(object):
         # FIXME: could we reliably auto-detect TEI/EAD/text file?
         parser.add_argument('--input', metavar='INPUT_TYPE', type=str, required=True,
             help='type of file to be processed (%(choices)s)', choices=['EAD', 'ead', 'text'])
+        parser.add_argument('--unique', action='store_true',
+            help='only list unique names found anywhere in the content')
         # dbpedia-specific options
         spotlight_opts = parser.add_argument_group('DBpedia Spotlight options')
         spotlight_opts.add_argument('--confidence', '-c', metavar='N', type=float, default=0.4,
@@ -52,17 +56,31 @@ class LookupNames(object):
                 print 'Error loading %s as EAD: %s' % (self.args.filename, err)
                 return -1
 
-            print 'Looking up names in EAD by section'
-            for label, text_list in self.get_ead_sections(ead):
-                print "\n%s" % label
-                for txt in text_list:
-                    # skip repeat look-ups
-                    # (e.g. "undated correspondence" or "miscellaneous invitations")
-                    if txt in self._queried_text:
-                        continue
-                    # print text so user can compare original and recognized names
-                    print txt
-                    self.list_names(txt)
+            if self.args.unique:
+                # NOTE: some duplication here of unique_names method,
+                # to allow aggregating results from multiple calls
+                names = set()
+                for label, text_list in self.get_ead_sections(ead):
+                    for txt in text_list:
+                        if txt in self._queried_text:
+                                continue
+                        names.update(set([(r['surfaceForm'], r['URI']) for r in self.get_names(txt)]))
+
+                names = sorted(names)
+                for name, uri in names:
+                    self.print_name(name, uri)
+            else:
+                print 'Looking up names in EAD by section'
+                for label, text_list in self.get_ead_sections(ead):
+                    print "\n%s" % label
+                    for txt in text_list:
+                        # skip repeat look-ups
+                        # (e.g. "undated correspondence" or "miscellaneous invitations")
+                        if txt in self._queried_text:
+                            continue
+                        # print text so user can compare original and recognized names
+                        print txt
+                        self.list_names(txt)
 
         elif self.args.input == 'text':
             # NOTE: would probably need to be read / processed in chunks
@@ -70,13 +88,16 @@ class LookupNames(object):
             with open(self.args.filename) as txtfile:
                 text = txtfile.read()
 
-            self.list_names(text)
+            if self.args.unique:
+                self.unique_names(text)
+            else:
+                self.list_names(text)
 
         # Brief summary of API call activity
         print '\nMade %d API call%s in %s' % (self.sc.total_api_calls, 's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
 
-    def list_names(self, text):
+    def get_names(self, text):
         # run spotlight annotation on a text string and print out identified
         # resources
         self._queried_text.add(text)
@@ -84,8 +105,21 @@ class LookupNames(object):
         results = self.sc.annotate(text)
 
         if not 'Resources' in results:
+            return []
+        else:
+            return results['Resources']
+
+    def list_names(self, text):
+        # run spotlight annotation on a text string and print out identified
+        # resources
+        results = self.get_names(text)
+
+        if not results:
             print 'No resources identified'
             return
+        else:
+            for resource in results:
+                self.print_name(resource['surfaceForm'], resource['URI'])
 
         # NOTE: dbpedia annotate result is per offset within the text, so
         # may include duplicates - e.g., different "surfaceForm" text variants
@@ -96,8 +130,14 @@ class LookupNames(object):
 
         # TODO: in list mode, maybe return a list of tuples (or similar), to
         # allow the results of multiple calls to be aggregated
-        for resource in results['Resources']:
-            print '%s  %s' % (resource['surfaceForm'].ljust(40), resource['URI'])
+
+    def unique_names(self, text):
+        names = sorted(set([(r['surfaceForm'], r['URI']) for r in self.get_names(text)]))
+        for name, uri in names:
+            self.print_name(name, uri)
+
+    def print_name(self, name, uri):
+        print '%s  %s' % (name.ljust(40), uri)
 
     def get_ead_sections(self, ead):
         # generator: returns tuples of section label, list of strings

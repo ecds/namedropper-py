@@ -23,3 +23,10 @@ passed to the Spotlight service; for example, to require a confidence score of a
 score of at least 40, and restrict identified types to only Persons, Places, and Organizations::
 
   $ lookup-names --input ead findingaid.xml --confidence 0.5 --support 40 --types "Person,Place,Organisation"
+
+To see a unique, sorted list of names and corresponding resource URIs, use the ``--unique`` option.
+
+.. Note::
+
+  For large EAD documents, running this script is currently quite slow due to DBpedia Spotlight response times
+  and the fact that individual paragraphs and container list descriptions are annotated individually.
