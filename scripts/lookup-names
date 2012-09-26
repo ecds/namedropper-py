@@ -3,6 +3,8 @@
 import argparse
 from eulxml.xmlmap import load_xmlobject_from_file
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
+from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+
 
 from namedropper import spotlight
 
@@ -25,9 +27,14 @@ class LookupNames(object):
             help='name of the file to be processed')
         # FIXME: could we reliably auto-detect TEI/EAD/text file?
         parser.add_argument('--input', metavar='INPUT_TYPE', type=str, required=True,
-            help='type of file to be processed (%(choices)s)', choices=['EAD', 'ead', 'text'])
+            help='type of file to be processed (%(choices)s)',
+            choices=['EAD', 'ead', 'tei', 'TEI', 'text'])
         parser.add_argument('--unique', action='store_true',
             help='only list unique names found anywhere in the content')
+        # tei option (TODO: probably should be required if input is tei)
+        parser.add_argument('--tei-xpath', type=str,
+            help='xpath for TEI section-level content to be processed (use t: for tei namespace)')
+
         # dbpedia-specific options
         spotlight_opts = parser.add_argument_group('DBpedia Spotlight options')
         spotlight_opts.add_argument('--confidence', '-c', metavar='N', type=float, default=0.4,
@@ -82,6 +89,31 @@ class LookupNames(object):
                         print txt
                         self.list_names(txt)
 
+        if self.args.input.lower() == 'tei':
+            try:
+                tei = load_xmlobject_from_file(self.args.filename, Tei)
+            except Exception as err:
+                print 'Error loading %s as TEI: %s' % (self.args.filename, err)
+                return -1
+
+            if self.args.unique:
+                # NOTE: very similar code to ead unique
+                names = set()
+                for label, text in self.get_tei_sections(tei):
+                    names.update(set([(r['surfaceForm'], r['URI']) for r in self.get_names(text)]))
+
+                names = sorted(names)
+                for name, uri in names:
+                    self.print_name(name, uri)
+
+            else:
+                print 'Looking up names in TEI by section'
+                for label, text in self.get_tei_sections(tei):
+                    print "\n%s" % label
+                    # not printing text or checking for repeated text
+                    # (tei content likely to be much longer and less repetitive)
+                    self.list_names(text)
+
         elif self.args.input == 'text':
             # NOTE: would probably need to be read / processed in chunks
             # if we want to handle text files of any significant size
@@ -94,7 +126,8 @@ class LookupNames(object):
                 self.list_names(text)
 
         # Brief summary of API call activity
-        print '\nMade %d API call%s in %s' % (self.sc.total_api_calls, 's' if self.sc.total_api_calls != 1 else '',
+        print '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
+            's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
 
     def get_names(self, text):
@@ -172,6 +205,14 @@ class LookupNames(object):
             yield ('%s: item descriptions' % series_title,
                 [unicode(c.did.unittitle) for c in cseries.c])
 
+    def get_tei_sections(self, tei):
+        for section in tei.node.xpath(self.args.tei_xpath,
+                                    namespaces={'t': TEI_NAMESPACE}):
+            # find the first heading or title
+            head = section.xpath('normalize-space((.//t:docTitle|.//t:head)[1])',
+                                    namespaces={'t': TEI_NAMESPACE})
+            yield (head, section.xpath('normalize-space(.)'))
+                # NOTE: should be list of text content to match ead....
 
 if __name__ == '__main__':
     LookupNames()
