@@ -21,8 +21,8 @@ class SpotlightClient(object):
     default_url = 'http://spotlight.dbpedia.org/rest'
     'Default base url for DBpedia Spotlight web service'
 
-    # TODO: keep track of number of queries & response time?
     _api_calls = []
+    # internal variable to keep track of number of queries & response time
 
     def __init__(self, base_url=None, confidence=None, support=None, types=None):
         if base_url is None:
