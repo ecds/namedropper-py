@@ -45,6 +45,9 @@ class LookupNames(object):
 
         # dbpedia-specific options
         spotlight_opts = parser.add_argument_group('DBpedia Spotlight options')
+        spotlight_opts.add_argument('--url', '-u', metavar='URL', type=str,
+            default=spotlight.SpotlightClient.default_url, dest='dbpedia_url',
+            help='URL for DBpedia Spotlight service (default: %(default)s )')
         spotlight_opts.add_argument('--confidence', '-c', metavar='N', type=float, default=0.4,
             help='minimum confidence score (default: %(default)s)')
         spotlight_opts.add_argument('--support', '-s', metavar='N', type=int, default=20,
@@ -61,7 +64,8 @@ class LookupNames(object):
             parser.print_help()
             exit(-1)
 
-        spotlight_args = {'confidence': self.args.confidence, 'support': self.args.support,
+        spotlight_args = {'base_url': self.args.dbpedia_url,
+            'confidence': self.args.confidence, 'support': self.args.support,
             'types': self.args.types}
 
         # for now, script only has a single mode: output a list of recognized names and URIs
