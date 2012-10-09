@@ -56,35 +56,32 @@ class SpotlightClientTest(unittest.TestCase):
         self.assert_('URI' in cleaned_data['Resources'][0])
         self.assert_('@support' not in cleaned_data['Resources'][0])
 
-
     def test_annotate(self, mockrequests):
         client = SpotlightClient()
 
         text = 'some bogus text to annotate'
 
         # simulate ok response
-        mockrequests.post.return_value.status_code = 200
+        mockrequests.get.return_value.status_code = 200
         mockrequests.codes.ok = 200
-        mockrequests.post.return_value.json = self.sample_result
+        mockrequests.get.return_value.json = self.sample_result
         result = client.annotate(text)
 
         self.assertEqual(client._clean_response(self.sample_result), result)
 
-        post_headers = {
+        get_headers = {
             'accept': 'application/json',
-            'content-type': 'application/x-www-form-urlencoded'
+            #'content-type': 'application/x-www-form-urlencoded'
         }
 
-        mockrequests.post.assert_called_with(client.default_url + '/annotate',
-            data={'text': text}, headers=post_headers)
+        mockrequests.get.assert_called_with(client.default_url + '/annotate',
+            params={'text': text}, headers=get_headers)
+
+        # TODO: test larger text / post
 
         # TODO: simulate error
 
     # TODO: test _clean_response
-
-
-
-
 
 
 if __name__ == '__main__':

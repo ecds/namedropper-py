@@ -29,6 +29,9 @@ CLASSIFIERS = [
 install_requires = [
     'requests',
     'eulxml',
+    'rdflib',
+    'SPARQLWrapper',
+    'feedparser'
 ]
 if sys.version_info < (2, 7):
     install_requires.append("argparse==1.1")

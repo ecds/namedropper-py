@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 import requests
+from SPARQLWrapper import SPARQLWrapper, JSON
 
 
 class SpotlightClient(object):
@@ -76,9 +77,20 @@ class SpotlightClient(object):
         elif self.default_types:
             data['types'] = self.default_types
 
-        response = self._call(requests.post, annotate_url, data=data,
-            headers={'accept': 'application/json',
-                    'content-type': 'application/x-www-form-urlencoded'})
+        rqst_args = {'headers': {'accept': 'application/json'}}
+
+        # if text is less than some arbitrary size, use GET
+        if len(text) < 5000:
+            rqst_args['params'] = data
+            rqst_method = requests.get
+
+        # for longer text, use POST
+        else:
+            rqst_args['data'] = data
+            rqst_args['content-type'] = 'application/x-www-form-urlencoded'
+            rqst_method = requests.post
+
+        response = self._call(rqst_method, annotate_url, **rqst_args)
         # # API docs suggest using POST instead of GET for large text content;
         # for POST, a content-type of application/x-www-form-urlencoded is required
 
@@ -125,3 +137,47 @@ class SpotlightClient(object):
 
         # NOTE: may not belong here, but somewhere: consider splitting out resource types
         # from comma-delimited string list into a python list
+
+
+def dbpedia_label(uri, language='EN'):
+    '''Utility method to query DBpedia for the label of a DBpedia resource.
+
+    :param uri: dbpedia resource uri
+    :param language: language of the label to return; defaults to English
+    '''
+
+    sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+    q = """
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?label
+        WHERE { <%s> rdfs:label ?label
+            FILTER langMatches( lang(?label), "%s" )}
+    """ % (uri, language)
+    sparql.setQuery(q)
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+
+    # return the label from the first bound result, if found
+    for result in results["results"]["bindings"]:
+        return result["label"]["value"]
+
+
+def dbpedia_viafid(uri):
+    '''Utility method to query DBpedia for the VIAF id of a DBpedia resource, if available.
+
+    :param uri: dbpedia resource uri
+    '''
+
+    sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+    q = """
+        PREFIX dbpprop: <http://dbpedia.org/property/>
+        SELECT ?viafid
+        WHERE { <%s> dbpprop:viaf ?viafid }
+    """ % uri
+    sparql.setQuery(q)
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+
+    # return the viafid from the first bound result, if one was found
+    for result in results["results"]["bindings"]:
+        return result["viafid"]["value"]
