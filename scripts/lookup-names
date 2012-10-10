@@ -41,7 +41,7 @@ class LookupNames(object):
         parser.add_argument('--unique', action='store_true',
             help='only list unique names found anywhere in the content')
         parser.add_argument('--viaf', action='store_true', dest='viaf_lookup', default=False,
-            help='look up VIAF identifiers for recognized entities')
+            help='look up VIAF identifiers for recognized Person entities')
 
         # tei option (TODO: probably should be required if input is tei)
         tei_opts = parser.add_argument_group('TEI options')
@@ -268,10 +268,10 @@ class LookupNames(object):
                 rsrc_type = None
                 if 'DBpedia:Person' in resource['types']:
                     rsrc_type = 'person'
-                elif 'DBpedia:Place' in resource['types']:
-                    rsrc_type = 'place'
-                elif 'DBpedia:Organisation' in resource['types']:
-                    rsrc_type = 'corp'
+                # elif 'DBpedia:Place' in resource['types']:
+                #     rsrc_type = 'place'
+                # elif 'DBpedia:Organisation' in resource['types']:
+                #     rsrc_type = 'corp'
 
                 label = spotlight.dbpedia_label(uri)
                 # TODO: fall-back label? what should this actually do here?
@@ -285,6 +285,7 @@ class LookupNames(object):
 
                 # NOTE: only persons in VIAF have the dbpedia sameAs rel
                 # How to reliably link places and organizations?
+                # For now, only implementing person-name VIAF lookup
 
                 # elif rsrc_type == 'place':
                 #     results = self.viaf.find_place(label)
