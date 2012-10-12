@@ -4,13 +4,11 @@ import argparse
 from eulxml.xmlmap import load_xmlobject_from_file
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+from lxml.etree import XMLSyntaxError, parse
 from rdflib import Graph, Namespace, URIRef
+import sys
 
 from namedropper import spotlight, viaf
-
-
-# TODO: may want to set up a local mirror of dbpedia spotlight,
-# to avoid hitting production server for development work....
 
 
 class LowerCaseAction(argparse.Action):
@@ -19,6 +17,9 @@ class LowerCaseAction(argparse.Action):
         setattr(namespace, self.dest, value.lower())
 
 OWL = Namespace('http://www.w3.org/2002/07/owl#')
+
+# TODO: refactor and move re-usable/testable code into namedropper module,
+# even if just as util methods
 
 
 class LookupNames(object):
@@ -33,8 +34,7 @@ class LookupNames(object):
         parser = argparse.ArgumentParser(description='Look up named entities in a file.')
         parser.add_argument('filename', metavar='INPUT_FILE', type=str,
             help='name of the file to be processed')
-        # FIXME: could we reliably auto-detect TEI/EAD/text file?
-        parser.add_argument('--input', metavar='INPUT_TYPE', type=str, required=True,
+        parser.add_argument('--input', metavar='INPUT_TYPE', type=str,
             help='type of file to be processed (%(choices)s)',
             action=LowerCaseAction,
             choices=['EAD', 'ead', 'tei', 'TEI', 'text'])
@@ -66,8 +66,17 @@ class LookupNames(object):
         # - probably do want to exclude dates (don't seem to be recognized in a useful way...)
 
         self.args = parser.parse_args()
+
+        # auto-detect input type if not specified
+        if not self.args.input:
+            self.args.input = self.autodetect_input_type()
+            # exit if we still don't have an input type
+            if not self.args.input:
+                print >> sys.stderr, 'Could not determine document input type; please specify with --input'
+                exit(-1)
+
         if self.args.input == 'tei' and not self.args.tei_xpath:
-            print 'Error! --tei-xpath is required when input type is TEI\n'
+            print 'Error! --tei-xpath is required when input document is TEI\n'
             parser.print_help()
             exit(-1)
 
@@ -129,9 +138,30 @@ class LookupNames(object):
                         self.list_names(txt)
 
         # Brief summary of API call activity
-        print '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
+        print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
             's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
+
+    def autodetect_input_type(self):
+        # attempt to auto-detect input file type
+        try:
+            # load as generic xml
+            generic_xml = parse(self.args.filename)
+            root_element = generic_xml.getroot().tag
+            # do a simple check on the root element (ignoring namespaces)
+            if root_element.endswith('TEI'):
+                return 'tei'
+            elif root_element.endswith('ead'):
+                return 'ead'
+
+        except XMLSyntaxError:
+            # Failure to parse as any kind of XML should mean text input.
+            # If we need to be more fine-grained, could check error text;
+            # should be something similar to this:
+            #   Start tag expected, '<' not found, line 1, column 1
+            return 'text'
+            print >> sys.stderr, 'Could not parse %s as XML, assuming text input' % \
+                self.args.filename
 
     def init_xml_object(self):
         # initialize an xmlobject based on user-specified arguments
