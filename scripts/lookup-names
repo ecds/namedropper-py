@@ -57,6 +57,8 @@ class LookupNames(object):
             help='minimum confidence score (default: %(default)s)')
         spotlight_opts.add_argument('--support', '-s', metavar='N', type=int, default=20,
             help='minimum support score (default: %(default)s)')
+        spotlight_opts.add_argument('--scores', default=False, action='store_true',
+            help='Display similarity score and support numbers (ignored if --unique is used)')
         spotlight_opts.add_argument('--types', '-t', metavar='TYPES', type=str, default='',  # Person,Place,Organisation',
             help='restrict to specific types of resources, e.g. Person,Place,Organization')  # (default: %(default)s)')
         # NOTE! restricting to person/place/org leaves out literary prizes, which are otherwise being
@@ -153,6 +155,7 @@ class LookupNames(object):
         self._queried_text.add(text)
 
         results = self.sc.annotate(text)
+
         if not results or not 'Resources' in results:
             return []
         else:
@@ -168,7 +171,8 @@ class LookupNames(object):
             return
         else:
             for resource in results:
-                self.print_name(resource['surfaceForm'], resource['URI'])
+                self.print_name(resource['surfaceForm'], resource['URI'],
+                    resource['similarityScore'], resource['support'])
                 if self.args.viaf_lookup:
                     viafid = self.get_viafid(resource)
                     if viafid:
@@ -183,8 +187,12 @@ class LookupNames(object):
         for name, uri in names:
             self.print_name(name, uri)
 
-    def print_name(self, name, uri):
-        print '%s  %s' % (name.ljust(40), uri)
+    def print_name(self, name, uri, similarity_score=None, support=None):
+        # if args.scores is set and values are availble, include similarity/support
+        if self.args.scores and similarity_score and support:
+            print '%s  %s (%.2f, %s)' % (name.ljust(40), uri, float(similarity_score), support)
+        else:
+            print '%s  %s' % (name.ljust(40), uri)
 
     def get_xml_sections(self, xmlobj):
         # generic method to return the appropriate headings and sections
