@@ -1,5 +1,5 @@
 # file namedropper-py/namedropper/spotlight.py
-# 
+#
 #   Copyright 2012 Emory University Library
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -103,7 +103,7 @@ class SpotlightClient(object):
         # for longer text, use POST
         else:
             rqst_args['data'] = data
-            rqst_args['content-type'] = 'application/x-www-form-urlencoded'
+            rqst_args['headers']['content-type'] = 'application/x-www-form-urlencoded'
             rqst_method = requests.post
 
         response = self._call(rqst_method, annotate_url, **rqst_args)
