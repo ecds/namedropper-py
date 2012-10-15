@@ -7,3 +7,15 @@ spotlight
 ----------
 .. automodule:: namedropper.spotlight
     :members:
+
+viaf
+----
+.. automodule:: namedropper.viaf
+    :members:
+
+util
+----
+.. automodule:: namedropper.util
+    :members:
+
+
