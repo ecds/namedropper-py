@@ -8,7 +8,7 @@ from lxml.etree import XMLSyntaxError, parse
 from rdflib import Graph, Namespace, URIRef
 import sys
 
-from namedropper import spotlight, viaf
+from namedropper import spotlight, viaf, util
 
 
 class LowerCaseAction(argparse.Action):
@@ -69,7 +69,7 @@ class LookupNames(object):
 
         # auto-detect input type if not specified
         if not self.args.input:
-            self.args.input = self.autodetect_input_type()
+            self.args.input = util.autodetect_file_type(self.args.filename)
             # exit if we still don't have an input type
             if not self.args.input:
                 print >> sys.stderr, 'Could not determine document input type; please specify with --input'
@@ -141,27 +141,6 @@ class LookupNames(object):
         print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
             's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
-
-    def autodetect_input_type(self):
-        # attempt to auto-detect input file type
-        try:
-            # load as generic xml
-            generic_xml = parse(self.args.filename)
-            root_element = generic_xml.getroot().tag
-            # do a simple check on the root element (ignoring namespaces)
-            if root_element.endswith('TEI'):
-                return 'tei'
-            elif root_element.endswith('ead'):
-                return 'ead'
-
-        except XMLSyntaxError:
-            # Failure to parse as any kind of XML should mean text input.
-            # If we need to be more fine-grained, could check error text;
-            # should be something similar to this:
-            #   Start tag expected, '<' not found, line 1, column 1
-            return 'text'
-            print >> sys.stderr, 'Could not parse %s as XML, assuming text input' % \
-                self.args.filename
 
     def init_xml_object(self):
         # initialize an xmlobject based on user-specified arguments

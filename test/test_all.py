@@ -20,6 +20,7 @@ from testcore import main
 
 # import test modules here for auto-discovery
 from test_spotlight import *
+from test_util import *
 
 if __name__ == '__main__':
     main()

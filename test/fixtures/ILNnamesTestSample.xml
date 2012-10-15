@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?><TEI xmlns="http://www.tei-c.org/ns/1.0">
+   <teiHeader><fileDesc>
+         <titleStmt>
+            <title>The Civil War: ILN sample set</title>
+        </titleStmt>
+	<respStmt>
+	<resp>extracts compiled by</resp>
+	<name>Alice Hickcox</name>
+	</respStmt>
+         <publicationStmt><publisher>Lewis H. Beck Center</publisher><pubPlace>Emory University</pubPlace><address>
+               <addrLine>Atlanta, Georgia</addrLine>
+            </address><availability>
+               <p>2000 Emory University.
+Permission is granted to download, transmit, or otherwise reproduce,
+distribute or display the contributions to the work claimed by Emory
+University for non-profit educational purposes, provided this header
+is included in its entirety.  For inquiries about commercial uses,
+contact the Lewis H. Beck Center, Woodruff Library, Emory University,
+Atlanta, Georgia 30322</p>
+            </availability><date>2005</date></publicationStmt>
+         <sourceDesc>
+            <bibl>
+               <title>The Illustrated London News</title>
+               <biblScope type="volume">Volume 42</biblScope> 
+               <date>Jan to June 1863</date>
+            </bibl>
+         </sourceDesc>
+      </fileDesc>
+</teiHeader>
+<text>
+  <body>
+<div1>
+    <div2 xml:id="iln42.1182.003" n="Advices from Philadelphia" type="Article">
+<head>[Advices from Philadelphia]</head>
+<p>Advices from Philadelphia state that the fibre of the plant
+hibiscos moscheutos is occupying the attention of the merchants at
+that port as a substitute for linen rags and jute. This plant is
+indigenous to the Northern States, and grows in abundance in the
+swampy lands of Pennsylvania, New Jersey, New York, &amp;c. At a moderate
+calculation, and taking into account the probability of loss from
+unforeseen causes, three tons and a half of disentegrated fibre can be
+derived from one acre of ground. Two prominent paper manufacturers of
+New York have estimated the fibre to be worth 100 dollars per ton, to
+be used as a substitute for linen rags in the manufacture of paper.--
+<hi rend="italic">Liverpool Journal of Commerce.</hi></p></div2>
+
+<div2 xml:id="iln42.1182.005" n="Literature" type="Article">
+<head>[Literature]</head>
+<p>We have before us another work which is also peculiarly suited to
+the moment. It is written by Mr. D. W. Mitchell, an Englishman who has
+been a resident in Richmond, Virginia, and is entitled <hi rend="italic">Ten Years in
+the United States. Being an Englishman's View of Men and Things in the
+North and South</hi> (Smith and Elder). The author states his object to be
+to explain, if possible, the most active and powerful causes of the
+great revolution which has taken place in the country in which he
+lived, working for his livelihood, and, at the same time, observing
+human nature as developed in Americans and American politics. The
+residence of Mr. Mitchell in the States commenced in 1848, that year
+of European convulsions; and he states with confidence that he has
+better opportunity than common of observing and understanding the
+people of whom he has written, their habits and feelings, their
+private and public life, and believes himself capable of pointing out
+the causes of the split between North and South, not the less because he,
+with some few others, had marked their rise and progress, and
+reflected upon the tendency of the life, political and social, of the
+United States. The author declares that, in considering and explaining
+the facts which he has here collected, he had to abandon many
+preconceived ideas and theories of his own, formed before he went to
+the States; and he admits that it is more than probable that some of
+the statements he has put forth will conflict with the prejudices and
+principles of many of his readers; but he protests that he has written
+carefully and conscientiously, with a desire to arrive at the truth as
+to the right and wrong of the momentous struggle now going on, sinking
+for the time sectarian and party prepossessions. The conclusion to
+which he arrives is that the separation of the North and South are not
+only natural but desirable; that it therefore inevitably follows, as a
+matter of course, he does not hesitate to add, that true liberty and
+real progress will suffer no drawback from such a change. There will
+probably be those who, in learning these premonitory confessions of a
+writer on this vexed question, who has been almost a citizen of the
+Southern capital too, will at once conclude that he is a writer in the
+Confederate interest purely. Well, perhaps he is so, but to a great
+extent unconsciously, if not unavoidably; and if his work is taken up
+with just so much qualification as is implied in these two
+circumstances of avowal of opinion on the broad question and local
+tendencies, we think, on the whole, that it will be found to have
+dealt with the case as nearly fairly and impartially as
+possible. Apart from the political disquisitions which the volume
+contains, there is a good deal of characteristic local colouring. The
+plan of the book is founded on the notion of endeavouring, as far as
+possible, to let the people of the United States describe themselves,
+and to let the parties and factions state their own views; and we are
+informed that many remarks and reflections which are not printed as
+quotations may be taken to be the deliberate opinions of enlightened
+Americans, expressed in conversations and discussions at times when
+hackneyed professions of party were for the hour forgotten. It should
+be observed that the work contains sketches of life and manners,
+social and political, at Richmond, at Washington, and at New York
+mainly, and some chapters are devoted to somewhat remote--for
+America--history, from which deductions are drawn and brought to bear
+on modern and immediate circumstances. Even if it had no other merit,
+the earlier chapters, which do something for raising the close veil
+which now envelopes the South, its inhabitants, and their ways, would
+make this book acceptable; but we venture to think that, as a whole,
+it is a contribution of some value to the knowledge of the United
+States of America, which most of us are glad to come across at this
+particular juncture.</p></div2>
+
+<div2 xml:id="iln42.1183.005" n="The Annual Stocktaking of the Liverpool       Cotton Market" type="Article">
+<head>[The Annual Stocktaking of the Liverpool Cotton Market]</head>
+<p>The annual stocktaking of the Liverpool cotton market shows a total
+of 392,000 bales, against 622,565 last year. Of the first-mentioned
+quantity 70,000 are American and 260,050 Surat cotton.</p>
+</div2>
+
+<div2 xml:id="iln42.1183.105" n="An American Paper" type="Article">
+<head>[An American Paper]</head>
+<p>An American paper says that a great grandnephew of Oliver Goldsmith
+was shot through the head and died at Antietam.</p></div2>
+
+<div2 xml:id="iln42.1184.002" n="The Alabama had Played a Bold Trick" type="Article">
+<head>[The Alabama had Played a Bold Trick]</head>
+<p>The Alabama had played a bold trick. On the 7th of December she
+intercepted the New York and Aspinwall steamer Ariel, off the east end
+of Cuba, and took from her 9000 dols. The Ariel was then allowed to
+proceed on bonds for 228,000 being given, payable thirty days after
+the recognition of the Southern Confederacy. The result of this
+proceeding was that on the return voyage the Ariel did not bring the
+specie from Aspinwall, and the Federal Government had sent a
+war-steamer to fetch it. The West India mail brings us further
+intelligence of the doings of the Alabama. Captain Semmes had captured
+an American barque, laden with provisions, and after having taken on
+board his own ship so much of her cargo as he deemed necessary, he set
+fire to the vessel. He had also seized a Federal schooner, but as her
+cargo was the property of British subjects she was allowed to proceed
+upon the Captain signing a bond to pay a certain sum of money to the
+Confederate Government at the close of the war.</p>
+</div2>
+
+<div2 xml:id="iln42.1184.102" n="The Career of the Alabama" type="Article">
+<head>[The Carreer of the Alabama]</head>
+<p><hi rend="smallcaps">The Career of the Alabama.</hi>--(To the
+Editor.)--Will you grant me space to correct a few of the many errors
+contained in Mr. S. M. Underhill's communication to the <hi rend="italic">Scotsman</hi>
+referring to the Confederate steamer Alabama, a copy of which appeared
+in your columns on Saturday last? 1. She was <hi rend="italic">not</hi> built under contract
+with a Mr. Butcher. 2. Her engines are not by Penn, of London, but by
+Laird, of Birkenhead. 3. She did not, after leaving Birkenhead, steam
+directly to the island to the Atlantic, &amp;c., but passed a day and two
+nights in Moelfra Bay, on the coast of Wales, taking in there a
+portion of her crew, bonded stores, &amp;c. 4. Her destination was not
+"Tarissa," wherever that may be, but Terceira, one of the
+Azores. 5. She was never commanded by a Captain Bullock. The gentleman
+who took charge of her from the time she left the stocks till she was
+delivered into the hands of Captain Semmes, of the Confederate navy,
+was Captain M. J. Butcher, R.N.R.  6. The Alabama had no English papers
+to prove her neutrality; in fact, she carried no papers
+whatever. 7. She was not visited daily by large parties of the
+inhabitants of "Tarissa," or Terceira. Once only (on the 22nd of
+August) a party of about seventy persons, chiefly officials, paid
+the vessel a visit.--A.B., Hull, Jan. 12, 1863.</p></div2>
+
+<div2 xml:id="iln42.1185.005" n="The New York Tribune Says" type="Article">
+<head>[The New York Tribune Says]</head>
+<p>The <hi rend="italic">New York Tribune</hi> says:--"Two nephews of
+the distinguished Hungarian Governor Kossuth, who have been serving in
+the army of Italy for the last two yeas, have arrived in this city,
+intending to offer their services in any capacity to the Government of
+the United States in its contest with the rebellion.  A son of
+Mdme. Ruttkai, another sister of the ex-Governor, has also entered our
+service."</p></div2>
+
+</div1>
+</body>
+</text>
+</TEI>
