@@ -4,13 +4,10 @@ import argparse
 from eulxml.xmlmap import load_xmlobject_from_file
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+from requests.exceptions import HTTPError
+import sys
 
-
-from namedropper import spotlight
-
-
-# TODO: may want to set up a local mirror of dbpedia spotlight,
-# to avoid hitting production server for development work....
+from namedropper import spotlight, util
 
 
 class LowerCaseAction(argparse.Action):
@@ -31,13 +28,15 @@ class LookupNames(object):
         parser = argparse.ArgumentParser(description='Look up named entities in a file.')
         parser.add_argument('filename', metavar='INPUT_FILE', type=str,
             help='name of the file to be processed')
-        # FIXME: could we reliably auto-detect TEI/EAD/text file?
-        parser.add_argument('--input', metavar='INPUT_TYPE', type=str, required=True,
+        parser.add_argument('--input', metavar='INPUT_TYPE', type=str,
             help='type of file to be processed (%(choices)s)',
             action=LowerCaseAction,
             choices=['EAD', 'ead', 'tei', 'TEI', 'text'])
         parser.add_argument('--unique', action='store_true',
             help='only list unique names found anywhere in the content')
+        parser.add_argument('--viaf', action='store_true', dest='viaf_lookup', default=False,
+            help='look up VIAF identifiers for recognized Person entities')
+
         # tei option (TODO: probably should be required if input is tei)
         tei_opts = parser.add_argument_group('TEI options')
         tei_opts.add_argument('--tei-xpath', type=str, metavar='XPATH',
@@ -52,6 +51,8 @@ class LookupNames(object):
             help='minimum confidence score (default: %(default)s)')
         spotlight_opts.add_argument('--support', '-s', metavar='N', type=int, default=20,
             help='minimum support score (default: %(default)s)')
+        spotlight_opts.add_argument('--scores', default=False, action='store_true',
+            help='Display similarity score and support numbers (ignored if --unique is used)')
         spotlight_opts.add_argument('--types', '-t', metavar='TYPES', type=str, default='',  # Person,Place,Organisation',
             help='restrict to specific types of resources, e.g. Person,Place,Organization')  # (default: %(default)s)')
         # NOTE! restricting to person/place/org leaves out literary prizes, which are otherwise being
@@ -59,8 +60,17 @@ class LookupNames(object):
         # - probably do want to exclude dates (don't seem to be recognized in a useful way...)
 
         self.args = parser.parse_args()
+
+        # auto-detect input type if not specified
+        if not self.args.input:
+            self.args.input = util.autodetect_file_type(self.args.filename)
+            # exit if we still don't have an input type
+            if not self.args.input:
+                print >> sys.stderr, 'Could not determine document input type; please specify with --input'
+                exit(-1)
+
         if self.args.input == 'tei' and not self.args.tei_xpath:
-            print 'Error! --tei-xpath is required when input type is TEI\n'
+            print 'Error! --tei-xpath is required when input document is TEI\n'
             parser.print_help()
             exit(-1)
 
@@ -120,7 +130,7 @@ class LookupNames(object):
                         self.list_names(txt)
 
         # Brief summary of API call activity
-        print '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
+        print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
             's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
 
@@ -145,7 +155,14 @@ class LookupNames(object):
         # resources
         self._queried_text.add(text)
 
-        results = self.sc.annotate(text)
+        try:
+            results = self.sc.annotate(text)
+        except HTTPError as err:
+            # for now, assume any error means the service is unavailable
+            # and exit the script (could check status for more fine-grained response)
+            print 'Error accessing DBpedia Spotlight -- %s' % err
+            exit(-1)
+
         if not results or not 'Resources' in results:
             return []
         else:
@@ -161,7 +178,12 @@ class LookupNames(object):
             return
         else:
             for resource in results:
-                self.print_name(resource['surfaceForm'], resource['URI'])
+                self.print_name(resource['surfaceForm'], resource['URI'],
+                    resource['similarityScore'], resource['support'])
+                if self.args.viaf_lookup:
+                    viafid = util.get_viafid(resource)
+                    if viafid:
+                        print '  %s' % viafid
 
         # NOTE: dbpedia annotate result is per offset within the text, so
         # may include duplicates - e.g., different "surfaceForm" text variants
@@ -172,8 +194,12 @@ class LookupNames(object):
         for name, uri in names:
             self.print_name(name, uri)
 
-    def print_name(self, name, uri):
-        print '%s  %s' % (name.ljust(40), uri)
+    def print_name(self, name, uri, similarity_score=None, support=None):
+        # if args.scores is set and values are availble, include similarity/support
+        if self.args.scores and similarity_score and support:
+            print '%s  %s (%.2f, %s)' % (name.ljust(40), uri, float(similarity_score), support)
+        else:
+            print '%s  %s' % (name.ljust(40), uri)
 
     def get_xml_sections(self, xmlobj):
         # generic method to return the appropriate headings and sections
@@ -237,6 +263,9 @@ class LookupNames(object):
             yield (head, [section.xpath('normalize-space(.)')])
             # NOTE: needs to be a list of text to match ead sections, even though
             # for now there is only one text element
+
+    _viafids = {}
+    _dbpedia_viaf_lookups = []
 
 
 if __name__ == '__main__':
