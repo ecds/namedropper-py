@@ -166,9 +166,15 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
     index = 0
     for item in result['Resources']:
         # convert string offset to int
-        item['offset'] = int(item['offset']) - initial_offset
+        item_offset = int(item['offset']) - initial_offset
+        if end_offset and item_offset > end_offset:
+            # end offset indicates node is a sub element
 
-        if item['offset'] >= len(orig_node_text):
+            # break out of for loop, but don't return without handling
+            # any remainder/tail text after the last resource
+            break
+
+        if item_offset >= len(orig_node_text):
             # get the node *after* the last inserted name
             next_node = node.getchildren()[index]
 
@@ -190,8 +196,8 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
             next_node_text = next_node.xpath('normalize-space(.)')
             # if the next name falls within next node text, recurse and tag names
             # - check that offset and surface form length are *both* inside the range of this node
-            if item['offset'] >= cur_offset and \
-                item['offset'] + len(item['surfaceForm']) < cur_offset + len(next_node_text):
+            if item_offset >= cur_offset and \
+                item_offset + len(item['surfaceForm']) < cur_offset + len(next_node_text):
 
                 # make a copy of the spotlight result data
                 result_copy = result.copy()
@@ -200,8 +206,16 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
                 annotate_xml(next_node, result_copy, initial_offset=cur_offset, end_offset=len(next_node_text))
                 cur_offset += len(next_node_text)
 
+                orig_node_text = ''.join([orig_node_text, next_node_text, next_node.tail or ''])
+
                 # this resource has been handled; update node index and go to next item
+
                 index += 1
+
+                # FIXME
+                #print 'index is ', index
+                #print [orig_node_text, next_node_text, next_node.tail or '']
+
                 continue
 
             # in theory, item could straddle item tags; probably just report & skip
@@ -211,10 +225,10 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
 
         # replace existing text node with text up to first recognized item
         if node.text is None and cur_offset == 0:
-            node.text = txt[cur_offset:item['offset']]
+            node.text = txt[cur_offset:item_offset]
         else:
             # put text up to next offset on the tail of the last inserted node
-            node.getchildren()[index - 1].tail = txt[cur_offset:item['offset']]
+            node.getchildren()[index - 1].tail = txt[cur_offset:item_offset]
 
         if is_person(item):
             name_type = 'person'
@@ -227,7 +241,7 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
             nsmap=node.nsmap)
         item_tag.text = item['surfaceForm']
 
-        cur_offset = item['offset'] + len(item['surfaceForm'])
+        cur_offset = item_offset + len(item['surfaceForm'])
         #node.append(item_tag)
         # insert at the current index, to avoid conflicts with any existing child nodes
         node.insert(index, item_tag)
@@ -235,7 +249,12 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
 
     # append any trailing text after the last entity, up to the requested end offset
     if cur_offset < len(txt):
-        node.getchildren()[-1].tail = txt[cur_offset:end_offset]
+        childnodes = node.getchildren()
+        remainder = txt[cur_offset:end_offset]
+        if childnodes:
+            childnodes[-1].tail = remainder
+        else:
+            node.text = remainder
 
 
 def is_person(item):
