@@ -40,6 +40,8 @@ class AutodetectFileTypeTest(unittest.TestCase):
         self.assertEqual('text', autodetect_file_type(FIXTURES['text']))
         self.assertEqual(None, autodetect_file_type(FIXTURES['generic-xml']))
 
+# TODO: should test get_viafid
+# (will probably require significant mock / fixtures to avoid hitting VIAF )
 
 if __name__ == '__main__':
     main()

@@ -4,22 +4,16 @@ import argparse
 from eulxml.xmlmap import load_xmlobject_from_file
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
-from lxml.etree import XMLSyntaxError, parse
-from rdflib import Graph, Namespace, URIRef
+from requests.exceptions import HTTPError
 import sys
 
-from namedropper import spotlight, viaf, util
+from namedropper import spotlight, util
 
 
 class LowerCaseAction(argparse.Action):
     # convert input argument to lower case before storing
     def __call__(self, parser, namespace, value, option_string=None):
         setattr(namespace, self.dest, value.lower())
-
-OWL = Namespace('http://www.w3.org/2002/07/owl#')
-
-# TODO: refactor and move re-usable/testable code into namedropper module,
-# even if just as util methods
 
 
 class LookupNames(object):
@@ -87,8 +81,6 @@ class LookupNames(object):
         # for now, script only has a single mode: output a list of recognized names and URIs
 
         self.sc = spotlight.SpotlightClient(**spotlight_args)
-
-        self.viaf = viaf.ViafClient()
 
         if self.args.input == 'text':
             # NOTE: would probably need to be read / processed in chunks
@@ -163,7 +155,13 @@ class LookupNames(object):
         # resources
         self._queried_text.add(text)
 
-        results = self.sc.annotate(text)
+        try:
+            results = self.sc.annotate(text)
+        except HTTPError as err:
+            # for now, assume any error means the service is unavailable
+            # and exit the script (could check status for more fine-grained response)
+            print 'Error accessing DBpedia Spotlight -- %s' % err
+            exit(-1)
 
         if not results or not 'Resources' in results:
             return []
@@ -183,7 +181,7 @@ class LookupNames(object):
                 self.print_name(resource['surfaceForm'], resource['URI'],
                     resource['similarityScore'], resource['support'])
                 if self.args.viaf_lookup:
-                    viafid = self.get_viafid(resource)
+                    viafid = util.get_viafid(resource)
                     if viafid:
                         print '  %s' % viafid
 
@@ -268,61 +266,6 @@ class LookupNames(object):
 
     _viafids = {}
     _dbpedia_viaf_lookups = []
-
-    def get_viafid(self, resource):
-        uri = resource['URI']
-        if uri not in self._viafids:
-
-            viafid = None
-            if uri not in self._dbpedia_viaf_lookups:
-                self._dbpedia_viaf_lookups.append(uri)
-                viafid = spotlight.dbpedia_viafid(uri)
-                # store url format, for consistency with viaf search results
-                self._viafids[uri] = 'http://viaf.org/viaf/%s' % viafid
-
-            if not viafid:
-                # determine type of resource
-                rsrc_type = None
-                if 'DBpedia:Person' in resource['types']:
-                    rsrc_type = 'person'
-                # elif 'DBpedia:Place' in resource['types']:
-                #     rsrc_type = 'place'
-                # elif 'DBpedia:Organisation' in resource['types']:
-                #     rsrc_type = 'corp'
-
-                label = spotlight.dbpedia_label(uri)
-                # TODO: fall-back label? what should this actually do here?
-                if not label:
-                    return None
-
-                results = []
-                # search for corresponding viaf resource by type
-                if rsrc_type == 'person':
-                    results = self.viaf.find_person(label)
-
-                # NOTE: only persons in VIAF have the dbpedia sameAs rel
-                # How to reliably link places and organizations?
-                # For now, only implementing person-name VIAF lookup
-
-                # elif rsrc_type == 'place':
-                #     results = self.viaf.find_place(label)
-                # elif rsrc_type == 'corp':
-                #     results = self.viaf.find_corporate(label)
-
-                g = Graph()
-                dbpedia_uriref = URIRef(uri)
-
-                # iterate through results and look for a result that is
-                # owl:sameAs the dbpedia resource
-                for result in results:
-                    viaf_uriref = URIRef(result['link'])
-                    g.parse(result['link'])
-                    if (viaf_uriref, OWL['sameAs'], dbpedia_uriref) in g:
-                        viafid = result['link']
-                        self._viafids[uri] = viafid
-                        break
-
-        return self._viafids.get(uri, None)
 
 
 if __name__ == '__main__':
