@@ -37,6 +37,9 @@ class LookupNames(object):
         parser.add_argument('--viaf', action='store_true', dest='viaf_lookup', default=False,
             help='look up VIAF identifiers for recognized Person entities')
 
+        parser.add_argument('--output', '-o', dest='output_file',
+            help='Update TEI with recognized names and output as specified file (EXPERIMENTAL)')
+
         # tei option (TODO: probably should be required if input is tei)
         tei_opts = parser.add_argument_group('TEI options')
         tei_opts.add_argument('--tei-xpath', type=str, metavar='XPATH',
@@ -114,9 +117,11 @@ class LookupNames(object):
 
             else:
                 print 'Looking up names by section'
-                for label, text_list in self.get_xml_sections(xmlobj):
+                for label, node_list in self.get_xml_sections(xmlobj):
                     print "\n%s" % label
-                    for txt in text_list:
+                    #for txt in text_list:
+                    for node in node_list:
+                        txt = node.xpath('normalize-space(.)')
                         # for EAD only, skip look-ups on exactly repeated text
                         # (e.g. "undated correspondence" or "miscellaneous invitations")
                         # and print the text user can compare original and recognized names
@@ -129,10 +134,21 @@ class LookupNames(object):
                         # since content is likely to be much longer and less repetitive
                         self.list_names(txt)
 
+                        # NOTE: currently only works for TEI, and only supports simple xml
+                        # if output file was requested and we have results, attempt
+                        # to update the lxml node with the identified resources.
+                        if self.args.output_file and self.last_results and 'Resources' in self.last_results:
+                            util.annotate_xml(node, self.last_results)
+
         # Brief summary of API call activity
         print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
             's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
+
+        # if output file was specified, write out the result
+        if self.args.output_file:
+            with open(self.args.output_file, 'w') as outfile:
+                xmlobj.serializeDocument(stream=outfile, pretty=True)
 
     def init_xml_object(self):
         # initialize an xmlobject based on user-specified arguments
@@ -157,11 +173,13 @@ class LookupNames(object):
 
         try:
             results = self.sc.annotate(text)
+            self.last_results = results
         except HTTPError as err:
             # for now, assume any error means the service is unavailable
             # and exit the script (could check status for more fine-grained response)
             print 'Error accessing DBpedia Spotlight -- %s' % err
             exit(-1)
+            self.last_results = None
 
         if not results or not 'Resources' in results:
             return []
@@ -210,11 +228,11 @@ class LookupNames(object):
             return self.get_tei_sections(xmlobj)
 
     def get_ead_sections(self, ead):
-        # generator: returns tuples of section label, list of strings
+        # generator: returns tuples of section label, list of NODES
 
         # biographical statement
         yield (unicode(ead.archdesc.biography_history.head),
-            [unicode(p) for p in ead.archdesc.biography_history.content])
+            [p.node for p in ead.archdesc.biography_history.content])
         # note: beware that using unicode on xmlmap elements normalizes whitespace
         # (good for lookup, bad for annotating original xml)
 
@@ -226,21 +244,21 @@ class LookupNames(object):
         # return elements for findingaid with a single container list
         else:
             yield ('Container List',
-                [unicode(c.did.unittitle) for c in ead.dsc.c])
+                [c.did.unittitle.node for c in ead.dsc.c])
 
     def get_ead_component_sections(self, cseries):
         # recursive generator for c01/c02 series/subseries elements
         series_title = unicode(cseries.did.unittitle)
         if cseries.scope_content:
             yield ('%s : %s' % (series_title, unicode(cseries.scope_content.head)),
-                [unicode(p) for p in cseries.scope_content.content])
+                [p.node for p in cseries.scope_content.content])
         if cseries.hasSubseries():
             for subseries in cseries.c:
                 for section in self.get_ead_component_sections(subseries):
                     yield section
         else:
             yield ('%s: item descriptions' % series_title,
-                [unicode(c.did.unittitle) for c in cseries.c])
+                [c.did.unittitle.node for c in cseries.c])
 
     def get_tei_sections(self, tei):
         # generator to return tuples of tei headings and text
@@ -260,7 +278,8 @@ class LookupNames(object):
             xpath_headings = '|'.join(['.//t:%s' % tag for tag in headings])
             head = section.xpath('normalize-space((%s)[1])' % xpath_headings,
                                     namespaces={'t': TEI_NAMESPACE})
-            yield (head, [section.xpath('normalize-space(.)')])
+            #yield (head, [section.xpath('normalize-space(.)')])
+            yield (head, [section])
             # NOTE: needs to be a list of text to match ead sections, even though
             # for now there is only one text element
 
