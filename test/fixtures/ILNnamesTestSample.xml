@@ -21,7 +21,7 @@ Atlanta, Georgia 30322</p>
          <sourceDesc>
             <bibl>
                <title>The Illustrated London News</title>
-               <biblScope type="volume">Volume 42</biblScope> 
+               <biblScope type="volume">Volume 42</biblScope>
                <date>Jan to June 1863</date>
             </bibl>
          </sourceDesc>
@@ -108,9 +108,7 @@ particular juncture.</p></div2>
 
 <div2 xml:id="iln42.1183.005" n="The Annual Stocktaking of the Liverpool       Cotton Market" type="Article">
 <head>[The Annual Stocktaking of the Liverpool Cotton Market]</head>
-<p>The annual stocktaking of the Liverpool cotton market shows a total
-of 392,000 bales, against 622,565 last year. Of the first-mentioned
-quantity 70,000 are American and 260,050 Surat cotton.</p>
+<p>The annual stocktaking of the Liverpool cotton market shows a total of 392,000 bales, against 622,565 last year. Of the first-mentioned quantity 70,000 are American and 260,050 Surat cotton.</p>
 </div2>
 
 <div2 xml:id="iln42.1183.105" n="An American Paper" type="Article">
@@ -169,6 +167,42 @@ intending to offer their services in any capacity to the Government of
 the United States in its contest with the rebellion.  A son of
 Mdme. Ruttkai, another sister of the ex-Governor, has also entered our
 service."</p></div2>
+
+
+
+<!-- copies of third article above with modifications -->
+
+<!-- nested tag with no recognized entities -->
+<div2 xml:id="iln42.1183.005a" n="The Annual Stocktaking of the Liverpool       Cotton Market" type="Article">
+<head>[The Annual Stocktaking of the Liverpool Cotton Market]</head>
+<p>The <span>annual</span> stocktaking   of the Liverpool cotton   market shows a total of 392,000 bales, against 622,565 last year. Of the first-mentioned quantity 70,000 are American and 260,050 Surat cotton.</p>
+</div2>
+
+<!-- leading nested tag -->
+<div2 xml:id="iln42.1183.005b" n="The Annual Stocktaking of the Liverpool       Cotton Market" type="Article">
+<head>[The Annual Stocktaking of the Liverpool Cotton Market]</head>
+<p><span>The annual</span> stocktaking of the Liverpool cotton market shows a total of 392,000 bales, against 622,565 last year. Of the first-mentioned quantity 70,000 are American and 260,050 Surat cotton.</p>
+</div2>
+
+<!--  multiple names inside a subelement -->
+<div2 xml:id="iln42.1183.005c" n="The Annual Stocktaking of the Liverpool       Cotton Market" type="Article">
+<head>[The Annual Stocktaking of the Liverpool Cotton Market]</head>
+<p><span>The annual <span>stocktaking<br/></span> of the Liverpool cotton market shows a total of 392,000 bales, against 622,565 last year. Of the first-mentioned quantity 70,000 are American and 260,050</span> Surat cotton.</p>
+</div2>
+
+<!-- article with bibliographical info / tags -->
+<div2 xml:id="iln38.1069.006" n="[Advices had been received]" type="Article">
+               <head>[Advices had been received]</head>
+               <bibl>
+                  <title>The Illustrated London News</title>
+                  <biblScope type="volume">vol. 38</biblScope>
+                  <biblScope type="issue">no. 1069</biblScope>
+                  <biblScope type="pages">p. 27</biblScope>
+                  <date when="1861-01-12">January 12, 1861</date>
+               <extent>1 paragraph</extent><idno type="ark">http://pid.emory.edu/ark:/25593/18k</idno></bibl>
+               <p>Advices had been received at Baltimore stating that the Dominican Government had taken forcible possession of the guano islands in the Caribbean Sea belonging to America.</p>
+
+</div2>
 
 </div1>
 </body>

@@ -143,3 +143,42 @@ article3_result = {
     u'policy': u'whitelist',
     u'types': u'Person,Place,Organisation'
 }
+
+article4_result = {
+    u'confidence': u'0.2',
+    u'sparql': u'',
+    u'text': u'[Advices had been received] The Illustrated London News vol. 38 no. 1069 p. 27 January 12, 1861 1 paragraphhttp://pid.emory.edu/ark:/25593/18k Advices had been received at Baltimore stating that the Dominican Government had taken forcible possession of the guano islands in the Caribbean Sea belonging to America.',
+    u'support': u'2000',
+    u'Resources': [
+        {   u'similarityScore': u'0.0751926600933075',
+            u'surfaceForm': u'ark',
+            u'support': u'5961',
+            u'offset': u'128',
+            u'URI': u'http://dbpedia.org/resource/Arkansas',
+            u'percentageOfSecondRank': u'0.6585130498956222',
+            u'types': u'DBpedia:AdministrativeRegion,DBpedia:PopulatedPlace,DBpedia:Place,Schema:Place,Freebase:/fictional_universe/fictional_setting,Freebase:/fictional_universe,Freebase:/government/governmental_jurisdiction,Freebase:/government,Freebase:/location/statistical_region,Freebase:/location,Freebase:/government/political_district,Freebase:/location/us_state,Freebase:/meteorology/cyclone_affected_area,Freebase:/meteorology,Freebase:/people/place_of_interment,Freebase:/people,Freebase:/book/book_subject,Freebase:/book,Freebase:/military/military_unit_place_of_origin,Freebase:/military,Freebase:/location/dated_location,Freebase:/location/administrative_division,Freebase:/location/location,Freebase:/organization/organization_scope,Freebase:/organization,DBpedia:TopicalConcept'},
+        {   u'similarityScore': u'0.08204954117536545',
+            u'surfaceForm': u'Baltimore',
+            u'support': u'4113',
+            u'offset': u'172',
+            u'URI': u'http://dbpedia.org/resource/Baltimore',
+            u'percentageOfSecondRank': u'0.9154368448299174',
+            u'types': u'DBpedia:City,DBpedia:Settlement,DBpedia:PopulatedPlace,DBpedia:Place,Schema:Place,Schema:City,Freebase:/business/employer,Freebase:/business,Freebase:/location/statistical_region,Freebase:/location,Freebase:/visual_art/art_owner,Freebase:/visual_art,Freebase:/people/place_of_interment,Freebase:/people,Freebase:/fictional_universe/fictional_setting,Freebase:/fictional_universe,Freebase:/location/administrative_division,Freebase:/sports/sports_team_location,Freebase:/sports,Freebase:/location/place_with_neighborhoods,Freebase:/government/governmental_jurisdiction,Freebase:/government,Freebase:/location/dated_location,Freebase:/location/citytown,Freebase:/location/hud_foreclosure_area,Freebase:/architecture/architectural_structure_owner,Freebase:/architecture,Freebase:/location/hud_county_place,Freebase:/location/us_county,Freebase:/film/film_location,Freebase:/film,Freebase:/business/business_location,Freebase:/location/location'},
+        {   u'similarityScore': u'0.11089084297418594',
+            u'surfaceForm': u'Dominican',
+            u'support': u'5928',
+            u'offset': u'199',
+            u'URI': u'http://dbpedia.org/resource/Dominican_Republic',
+            u'percentageOfSecondRank': u'0.7708973624983934',
+            u'types': u'DBpedia:Country,DBpedia:PopulatedPlace,DBpedia:Place,Schema:Place,Schema:Country,Freebase:/olympics/olympic_participating_country,Freebase:/olympics,Freebase:/organization/organization_scope,Freebase:/organization,Freebase:/business/board_member,Freebase:/business,Freebase:/sports/sports_team_location,Freebase:/sports,Freebase:/sports/sport_country,Freebase:/location/country,Freebase:/location,Freebase:/organization/organization_member,Freebase:/location/location,Freebase:/time/time_zone,Freebase:/time,Freebase:/location/dated_location,Freebase:/location/statistical_region,Freebase:/location/administrative_division,Freebase:/book/book_subject,Freebase:/book,Freebase:/meteorology/cyclone_affected_area,Freebase:/meteorology,Freebase:/government/governmental_jurisdiction,Freebase:/government,DBpedia:TopicalConcept'},
+        {   u'similarityScore': u'0.09556137770414352',
+            u'surfaceForm': u'America',
+            u'support': u'3432',
+            u'offset': u'305',
+            u'URI': u'http://dbpedia.org/resource/Americas',
+            u'percentageOfSecondRank': u'0.7114575038840932',
+            u'types': u'DBpedia:Continent,DBpedia:PopulatedPlace,DBpedia:Place,Schema:Place,Schema:Continent,Freebase:/location/region,Freebase:/location,Freebase:/location/location,Freebase:/organization/organization_scope,Freebase:/organization,Freebase:/book/book_subject,Freebase:/book,Freebase:/organization/organization,DBpedia:TopicalConcept'}
+    ],
+    u'policy': u'whitelist',
+    u'types': u'Person,Place,Organisation'
+}

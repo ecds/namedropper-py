@@ -140,9 +140,11 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
         relative to the offset of a sub element)
     :param end_offset: end offset where annotation should stop; should only
         be used when called recursively (stop processing after
-        finishing the content for a sub elemen)
+        finishing the content for a sub element)
+
+    :returns: total count of the number of entities inserted into the xml
     '''
-    # very crude initial stab; assumes single node with untagged text
+
     # assuming TEI tags for now
 
     name_tag = 'name'
@@ -152,7 +154,15 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
 
     cur_offset = 0
     # TODO: copy node rather than changing original passed in?
-    orig_node_text = node.xpath('normalize-space(text())')
+
+    # we need a whitespace-normalized version of the first text segment
+    # under this node
+    if node.text is None:
+        # special case: no text before first child element
+        orig_node_text = ''
+    else:
+        orig_node_text = node.xpath('normalize-space(text())')
+
     # capture the original text of this node before we modify it;
     # whitespace normalized to match the normalized text given to dbpedia
 
@@ -164,19 +174,36 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
 
     # iterate through resources and add text + tags for resources
     index = 0
+    inserted = 0
+    skip_next = 0
+
+    # FIXME: is the approach wrong here? should we be iterating over the xml tree
+    # using iter or iterchildren and add resources as we get to the appropriate offset ?
+
     for item in result['Resources']:
+        logger.debug('item %s at %s - insert index is %d' % (item['surfaceForm'], item['offset'], index))
+        if skip_next:
+            skip_next -= 1
+            continue
+
         # convert string offset to int
         item_offset = int(item['offset']) - initial_offset
         if end_offset and item_offset > end_offset:
-            # end offset indicates node is a sub element
+            # end offset indicates current node is a sub element
 
-            # break out of for loop, but don't return without handling
+            # break out of the for loop, but don't return without handling
             # any remainder/tail text after the last resource
             break
 
         if item_offset >= len(orig_node_text):
+            # next item falls beyond current node text (e.g., within or after a subelement)
             # get the node *after* the last inserted name
-            next_node = node.getchildren()[index]
+            logger.debug('current node is %r - looking for child index %d' % (node, index))
+            try:
+                next_node = node.getchildren()[index]
+            except IndexError:
+                logger.warn('Next node not found when one was expected at index %d ! stopping...' % index)
+                break
 
             # insert the remainder of original text on tail
             remainder = orig_node_text[cur_offset:]
@@ -188,35 +215,49 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
             # after remaindex content is a space; if the next node text does NOT starts with
             # a space, assuming that the space should be included in the remainder tail text here.
             if txt[cur_offset:cur_offset + 1] == ' ':
-                if not next_node.text.startswith(' '):   # TODO: handle nested text
+                if not ''.join(next_node.xpath('text()[1]')).startswith(' '):   # TODO: handle nested text
                     remainder += ' '
                     cur_offset += 1
-            node.getchildren()[index - 1].tail = remainder
+
+            if index == 0:
+                node.text = remainder
+            else:
+                node.getchildren()[index - 1].tail = remainder
 
             next_node_text = next_node.xpath('normalize-space(.)')
             # if the next name falls within next node text, recurse and tag names
             # - check that offset and surface form length are *both* inside the range of this node
-            if item_offset >= cur_offset and \
-                item_offset + len(item['surfaceForm']) < cur_offset + len(next_node_text):
 
-                # make a copy of the spotlight result data
-                result_copy = result.copy()
-                result_copy['Resources'] = result['Resources'][index:]
-                # annotate the node and adjust offset
-                annotate_xml(next_node, result_copy, initial_offset=cur_offset, end_offset=len(next_node_text))
-                cur_offset += len(next_node_text)
+            # if item_offset >= cur_offset and \
+            #     item_offset + len(item['surfaceForm']) < cur_offset + len(next_node_text):
 
-                orig_node_text = ''.join([orig_node_text, next_node_text, next_node.tail or ''])
+            # make a copy of the spotlight result data
+            result_copy = result.copy()
+            result_copy['Resources'] = result['Resources'][index:]
+            # annotate the node and adjust offset
+            logger.debug('recursing on %r with offset %d and end %d' % \
+                    (next_node, initial_offset + cur_offset, len(next_node_text)))
+            node_inserted = annotate_xml(next_node, result_copy, initial_offset=initial_offset + cur_offset,
+                    end_offset=len(next_node_text))
+            cur_offset += len(next_node_text)
+            logger.debug('returned from recursion')
 
-                # this resource has been handled; update node index and go to next item
+            # FIXME: tail text not normalized
+            orig_node_text = ''.join([orig_node_text, next_node_text, next_node.tail or ''])
 
-                index += 1
+            index += 1
+            # this resource has been handled; update node index and go to next item
+            if node_inserted:
+                logger.debug('inserted %d items' % node_inserted)
+                skip_next = node_inserted - 1
 
-                # FIXME
-                #print 'index is ', index
-                #print [orig_node_text, next_node_text, next_node.tail or '']
+                inserted += node_inserted
 
                 continue
+            else:
+                logger.debug('did not insert any items in child node')
+
+            # FIXME
 
             # in theory, item could straddle item tags; probably just report & skip
             # since that's probably not something we can handle automatically
@@ -230,6 +271,8 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
             # put text up to next offset on the tail of the last inserted node
             node.getchildren()[index - 1].tail = txt[cur_offset:item_offset]
 
+        attributes = {'res': item['URI']}
+        name_type = None
         if is_person(item):
             name_type = 'person'
         elif is_org(item):
@@ -237,24 +280,30 @@ def annotate_xml(node, result, initial_offset=0, end_offset=None):
         elif is_place(item):
             name_type = 'place'
 
-        item_tag = node.makeelement(name_tag, attrib={'res': item['URI'], 'type': name_type},
+        if name_type:
+            attributes['type'] = name_type
+
+        item_tag = node.makeelement(name_tag, attrib=attributes,
             nsmap=node.nsmap)
         item_tag.text = item['surfaceForm']
 
         cur_offset = item_offset + len(item['surfaceForm'])
-        #node.append(item_tag)
         # insert at the current index, to avoid conflicts with any existing child nodes
         node.insert(index, item_tag)
+        inserted += 1
         index += 1
 
     # append any trailing text after the last entity, up to the requested end offset
     if cur_offset < len(txt):
         childnodes = node.getchildren()
         remainder = txt[cur_offset:end_offset]
+
         if childnodes:
             childnodes[-1].tail = remainder
         else:
             node.text = remainder
+
+    return inserted
 
 
 def is_person(item):
