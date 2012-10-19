@@ -138,7 +138,7 @@ class LookupNames(object):
                         # if output file was requested and we have results, attempt
                         # to update the lxml node with the identified resources.
                         if self.args.output_file and self.last_results and 'Resources' in self.last_results:
-                            util.annotate_xml(node, self.last_results)
+                            util.annotate_xml(node, self.last_results, self.args.input)
 
         # Brief summary of API call activity
         print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
