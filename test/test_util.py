@@ -19,12 +19,13 @@
 import unittest
 import os
 from eulxml.xmlmap import load_xmlobject_from_file
-#from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
+from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD, EAD_NAMESPACE
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+from mock import patch
 
-from namedropper.util import autodetect_file_type, annotate_xml, is_person, is_place
+from namedropper.util import autodetect_file_type, annotate_xml, is_person, is_place, is_org
 from testcore import main
-from fixtures import ilnnames_annotations
+from fixtures import ilnnames_annotations, hobsbaum_annotations
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -51,9 +52,11 @@ class AutodetectFileTypeTest(unittest.TestCase):
 class AnnotateXmlTest(unittest.TestCase):
 
     tei_ns = {'namespaces': {'t': TEI_NAMESPACE}}
+    ead_ns = {'namespaces': {'e': EAD_NAMESPACE}}
 
     def setUp(self):
         self.tei = load_xmlobject_from_file(FIXTURES['tei'], Tei)
+        self.ead = load_xmlobject_from_file(FIXTURES['ead'], EAD)
 
     def test_annotate_xml__simplest(self):
         # simplest case: article with a single paragraph and no mixed content or nested tags
@@ -245,6 +248,43 @@ class AnnotateXmlTest(unittest.TestCase):
             # uri & value should match dbpedia result
             self.assertEqual(result['URI'], names[i].get('res'))
             self.assertEqual(result['surfaceForm'], names[i].text)
+
+    @patch('namedropper.util.get_viafid')       # patch to ensure we don't hit VIAF in unit tests
+    def test_ead(self, mock_viafid):
+        # first paragraph in biographical note
+        paragraph = self.ead.archdesc.biography_history.content[0].node
+        annotations = hobsbaum_annotations.bioghist_result
+        text_content = paragraph.xpath('normalize-space(.)')
+        inserted = annotate_xml(paragraph, annotations, mode='ead')
+
+        # inspect the tags that were inserted
+        names = paragraph.xpath('.//e:persname|.//e:corpname|.//e:geogname', **self.ead_ns)
+        expected = len(annotations['Resources'])
+        got = len(names)
+        self.assertEqual(expected, got,
+            'resources identified in dbpedia spotlight result should be tagged in the xml (expected %d, got %d)' \
+            % (expected, got))
+        self.assertEqual(len(annotations['Resources']), inserted,
+            'resources identified in spotlight result should match reported inserted count')
+
+        # normalized text should be the same before and after
+        self.assertEqual(text_content, paragraph.xpath('normalize-space(.)'))
+
+        # tag name should match resource type; text value should match equivalent dbpedia result
+        # TODO: viaf id? dbpedia uri
+        for i in range(inserted):
+            result = annotations['Resources'][i]
+            if is_person(result):
+                expected_tag = 'persname'
+            elif is_place(result):
+                expected_tag = 'geogname'
+            elif is_org(result):
+                expected_tag = 'corpname'
+            self.assertEqual('{%s}%s' % (EAD_NAMESPACE, expected_tag), names[i].tag)
+            # value should match dbpedia result
+            self.assertEqual(result['surfaceForm'], names[i].text)
+            # TODO: test viaf id lookup ? (at least for persons)
+            #self.assertEqual(result['URI'], names[i].get('res'))
 
 
 if __name__ == '__main__':

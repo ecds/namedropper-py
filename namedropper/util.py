@@ -168,7 +168,7 @@ def is_place(item):
     return 'DBpedia:Place' in item_types
 
 
-def annotate_xml(node, result):
+def annotate_xml(node, result, mode='tei'):
     '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
     that dbpedia annotate was called on the **normalized** text from this node.
     Currently updates the node that is passed in; whitespace will be normalized in text
@@ -181,11 +181,12 @@ def annotate_xml(node, result):
     :returns: total count of the number of entities inserted into the xml
     '''
 
-    # assuming TEI tags for now
-    name_tag = 'name'
-    # create the new node in the same namespace as its parent
-    if node.nsmap and node.prefix in node.nsmap:
-        name_tag = '{%s}%s' % (node.nsmap[node.prefix], name_tag)
+    # TEI tags for now
+    if mode == 'tei':
+        name_tag = 'name'
+        # create the new node in the same namespace as its parent
+        if node.nsmap and node.prefix in node.nsmap:
+            name_tag = '{%s}%s' % (node.nsmap[node.prefix], name_tag)
 
     # find all text nodes under this node
     text_list = node.xpath('.//text()')
@@ -214,13 +215,12 @@ def annotate_xml(node, result):
         text_end_offset = current_offset + len(normalized_text)
         # get the parent node for the current text
         parent_node = text_node.getparent()
-        # find node immediately after current text node before changing anything
-        next_nodes = parent_node.getparent().xpath('.//node()[preceding-sibling::text() = "%s"][1]' % text_node)
-        if next_nodes:
-            next_node = next_nodes[0]
-
-        else:
-            next_node = None
+        # find node immediately after the current text node, so we know where to insert name tags
+        if text_node == parent_node.text:
+            children = list(parent_node)
+            next_node = children[0] if children else None
+        elif text_node == parent_node.tail:
+            next_node = parent_node.getnext()   # next sibling or None
 
         # next resource is inside the current text
         if item_offset >= current_offset and item_end_offset <= text_end_offset:
@@ -239,16 +239,33 @@ def annotate_xml(node, result):
                 parent_node = parent_node.getparent()
 
             # insert a node for the item
-            attributes = {'res': item['URI']}
-            name_type = None
+            tei_type = None
             if is_person(item):
-                name_type = 'person'
+                tei_type = 'person'
+                ead_tag = 'persname'
             elif is_org(item):
-                name_type = 'org'
+                tei_type = 'org'
+                ead_tag = 'corpname'
             elif is_place(item):
-                name_type = 'place'
-            if name_type:
-                attributes['type'] = name_type
+                tei_type = 'place'
+                ead_tag = 'geogname'
+
+            if mode == 'tei':
+                attributes = {'res': item['URI']}
+                if tei_type:
+                    attributes['type'] = tei_type
+            elif mode == 'ead':
+                name_tag = ead_tag
+                # create the new node in the same namespace as its parent
+                if node.nsmap and node.prefix in node.nsmap:
+                    name_tag = '{%s}%s' % (node.nsmap[node.prefix], ead_tag)
+
+                # EAD can't reference dbpedia URI; lookup in VIAF
+                attributes = {}
+                if ead_tag == 'persname':
+                    viafid = get_viafid(item['URI'])
+                    if viafid:
+                        attributes = {'source': 'viaf', 'authfilenumber': viafid}
 
             item_tag = node.makeelement(name_tag, attrib=attributes,
                 nsmap=node.nsmap)
@@ -273,8 +290,9 @@ def annotate_xml(node, result):
             item_tag.tail = text_after
 
             # set the remainder text as the next text node to be processed
-            # - find via text so we have a "smart string" / lxml element string with getparent()
-            remainder_node = parent_node.xpath('.//text()[. = "%s"]' % text_after)[0]
+            # - find via xpath so we have a "smart string" / lxml element string with getparent()
+            remainder_node = item_tag.xpath('./following-sibling::text()[1]')[0]
+
             text_list.insert(0, remainder_node)
             prev_text = item_tag.text
 
