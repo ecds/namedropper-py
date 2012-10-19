@@ -69,7 +69,7 @@ class AnnotateXmlTest(unittest.TestCase):
 
         # inspect the tags that were inserted
         self.assertEqual(len(annotations['Resources']), len(names),
-            'resources identified in dbpedia spotlight result should be tagged in the xml')
+            'number of resources identified in dbpedia spotlight result should be tagged in the xml')
         self.assertEqual(len(annotations['Resources']), inserted,
             'resources identified in spotlight result should match reported inserted count')
         # both resources are places; uri & value should match equivalent dbpedia result
@@ -113,8 +113,9 @@ class AnnotateXmlTest(unittest.TestCase):
         annotations = ilnnames_annotations.article2_result
         article = self.tei.node.xpath('//t:div2[@xml:id="iln42.1182.005"]/t:p', **self.tei_ns)[0]
         text_content = article.xpath('normalize-space(.)')
-        hi_rend_text = ''.join(article.xpath('t:hi//text()', **self.tei_ns)).replace('\n', ' ')
+        hi_rend_text = ''.join(article.xpath('t:hi//text()', **self.tei_ns))
         inserted = annotate_xml(article, annotations)
+
         # normalized text should be the same before and after
         self.assertEqual(text_content, article.xpath('normalize-space(.)'))
         new_hi_rend_text = ''.join(article.xpath('t:hi//text()', **self.tei_ns))
@@ -216,8 +217,6 @@ class AnnotateXmlTest(unittest.TestCase):
             self.assertEqual(result['URI'], names[i].get('res'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
-    # TODO: annotate_xml doesn't support this type of nested xml yet, but it needs to
-    @unittest.skip('text with nested bibl tags not yet supported')
     def test_annotate_xml__with_bibl(self):
         # article with full bibliography / header; processing at div2 level instead of paragraph
         annotations = ilnnames_annotations.article4_result
@@ -225,15 +224,20 @@ class AnnotateXmlTest(unittest.TestCase):
         text_content = article.xpath('normalize-space(.)')
         inserted = annotate_xml(article, annotations)
 
-        # normalized text should be the same before and after
-        self.assertEqual(text_content, article.xpath('normalize-space(.)'))
         names = article.xpath('.//t:name', **self.tei_ns)
 
         # inspect the tags that were inserted
-        self.assertEqual(len(annotations['Resources']), len(names),
-            'resources identified in dbpedia spotlight result should be tagged in the xml')
+        expected = len(annotations['Resources'])
+        got = len(names)
+        self.assertEqual(expected, got,
+            'resources identified in dbpedia spotlight result should be tagged in the xml (expected %d, got %d)' \
+            % (expected, got))
         self.assertEqual(len(annotations['Resources']), inserted,
             'resources identified in spotlight result should match reported inserted count')
+
+        # normalized text should be the same before and after
+        self.assertEqual(text_content, article.xpath('normalize-space(.)'))
+
         # both resources are places; uri & value should match equivalent dbpedia result
         for i in [0, 1]:
             result = annotations['Resources'][i]

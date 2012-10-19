@@ -17,6 +17,7 @@
 import logging
 from lxml.etree import XMLSyntaxError, parse
 from rdflib import Graph, Namespace, URIRef
+import re
 from namedropper import spotlight, viaf
 
 logger = logging.getLogger(__name__)
@@ -128,182 +129,28 @@ def get_viafid(resource):
     return _viafids.get(uri, None)
 
 
-def annotate_xml(node, result, initial_offset=0, end_offset=None):
-    '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
-    that dbpedia annotate was called on the **normalized** text from this node.
+NORMALIZE_WHITESPACE_RE = re.compile('\s\s+', flags=re.MULTILINE)
 
-    :param node: lxml element node
-    :param result: dbpedia spotlight result, as returned by
-        :meth:`namedropper.spotlight.SpotlightClient.annotate`
-    :param initial_offset: start annotating the xml at the requested offset;
-        should only be used when called recursively  (adjust result offsets
-        relative to the offset of a sub element)
-    :param end_offset: end offset where annotation should stop; should only
-        be used when called recursively (stop processing after
-        finishing the content for a sub element)
 
-    :returns: total count of the number of entities inserted into the xml
+def normalize_whitespace(txt, next=None, prev=None):
+    '''Normalize whitespace in a string to match the logic
+    of ``normalize-space()`` in XPath.  Replaces all internal sequences
+    of white space with a single space and conditionally removes
+    leading and trailing whitespace.
+
+    :param txt: text string to be normalized
+    :param next: optional next string; used to determine
+        if trailing whitespace should be removed
+    :param prev: optional preceding string; used to determine
+        if leading whitepace should be removed
     '''
+    txt = NORMALIZE_WHITESPACE_RE.sub(' ', txt)
+    if not next or next.startswith(' '):
+        txt = txt.rstrip()
+    if not prev or prev.endswith(' '):
+        txt = txt.lstrip()
 
-    # assuming TEI tags for now
-
-    name_tag = 'name'
-    # create the new node in the same namespace as its parent
-    if node.nsmap and node.prefix in node.nsmap:
-        name_tag = '{%s}%s' % (node.nsmap[node.prefix], name_tag)
-
-    cur_offset = 0
-    # TODO: copy node rather than changing original passed in?
-
-    # we need a whitespace-normalized version of the first text segment
-    # under this node
-    if node.text is None:
-        # special case: no text before first child element
-        orig_node_text = ''
-    else:
-        orig_node_text = node.xpath('normalize-space(text())')
-
-    # capture the original text of this node before we modify it;
-    # whitespace normalized to match the normalized text given to dbpedia
-
-    # clear out the existing text in the lxml node we will be annotating
-    node.text = None
-    # grab the text relative to the requested initial offset
-    # (identified resources will be offset relative to this text)
-    txt = result['text'][initial_offset:]
-
-    # iterate through resources and add text + tags for resources
-    index = 0
-    inserted = 0
-    skip_next = 0
-
-    # FIXME: is the approach wrong here? should we be iterating over the xml tree
-    # using iter or iterchildren and add resources as we get to the appropriate offset ?
-
-    for item in result['Resources']:
-        logger.debug('item %s at %s - insert index is %d' % (item['surfaceForm'], item['offset'], index))
-        if skip_next:
-            skip_next -= 1
-            continue
-
-        # convert string offset to int
-        item_offset = int(item['offset']) - initial_offset
-        if end_offset and item_offset > end_offset:
-            # end offset indicates current node is a sub element
-
-            # break out of the for loop, but don't return without handling
-            # any remainder/tail text after the last resource
-            break
-
-        if item_offset >= len(orig_node_text):
-            # next item falls beyond current node text (e.g., within or after a subelement)
-            # get the node *after* the last inserted name
-            logger.debug('current node is %r - looking for child index %d' % (node, index))
-            try:
-                next_node = node.getchildren()[index]
-            except IndexError:
-                logger.warn('Next node not found when one was expected at index %d ! stopping...' % index)
-                break
-
-            # insert the remainder of original text on tail
-            remainder = orig_node_text[cur_offset:]
-            # update the current offset
-            cur_offset += len(remainder)
-
-            # NOTE: because we are using normalize-whitespace, there could be
-            # a whitespace discrepancy here.  Check if the character immediately
-            # after remaindex content is a space; if the next node text does NOT starts with
-            # a space, assuming that the space should be included in the remainder tail text here.
-            if txt[cur_offset:cur_offset + 1] == ' ':
-                if not ''.join(next_node.xpath('text()[1]')).startswith(' '):   # TODO: handle nested text
-                    remainder += ' '
-                    cur_offset += 1
-
-            if index == 0:
-                node.text = remainder
-            else:
-                node.getchildren()[index - 1].tail = remainder
-
-            next_node_text = next_node.xpath('normalize-space(.)')
-            # if the next name falls within next node text, recurse and tag names
-            # - check that offset and surface form length are *both* inside the range of this node
-
-            # if item_offset >= cur_offset and \
-            #     item_offset + len(item['surfaceForm']) < cur_offset + len(next_node_text):
-
-            # make a copy of the spotlight result data
-            result_copy = result.copy()
-            result_copy['Resources'] = result['Resources'][index:]
-            # annotate the node and adjust offset
-            logger.debug('recursing on %r with offset %d and end %d' % \
-                    (next_node, initial_offset + cur_offset, len(next_node_text)))
-            node_inserted = annotate_xml(next_node, result_copy, initial_offset=initial_offset + cur_offset,
-                    end_offset=len(next_node_text))
-            cur_offset += len(next_node_text)
-            logger.debug('returned from recursion')
-
-            # FIXME: tail text not normalized
-            orig_node_text = ''.join([orig_node_text, next_node_text, next_node.tail or ''])
-
-            index += 1
-            # this resource has been handled; update node index and go to next item
-            if node_inserted:
-                logger.debug('inserted %d items' % node_inserted)
-                skip_next = node_inserted - 1
-
-                inserted += node_inserted
-
-                continue
-            else:
-                logger.debug('did not insert any items in child node')
-
-            # FIXME
-
-            # in theory, item could straddle item tags; probably just report & skip
-            # since that's probably not something we can handle automatically
-
-            # TODO: warn & skip if item straddles a node
-
-        # replace existing text node with text up to first recognized item
-        if node.text is None and cur_offset == 0:
-            node.text = txt[cur_offset:item_offset]
-        else:
-            # put text up to next offset on the tail of the last inserted node
-            node.getchildren()[index - 1].tail = txt[cur_offset:item_offset]
-
-        attributes = {'res': item['URI']}
-        name_type = None
-        if is_person(item):
-            name_type = 'person'
-        elif is_org(item):
-            name_type = 'org'
-        elif is_place(item):
-            name_type = 'place'
-
-        if name_type:
-            attributes['type'] = name_type
-
-        item_tag = node.makeelement(name_tag, attrib=attributes,
-            nsmap=node.nsmap)
-        item_tag.text = item['surfaceForm']
-
-        cur_offset = item_offset + len(item['surfaceForm'])
-        # insert at the current index, to avoid conflicts with any existing child nodes
-        node.insert(index, item_tag)
-        inserted += 1
-        index += 1
-
-    # append any trailing text after the last entity, up to the requested end offset
-    if cur_offset < len(txt):
-        childnodes = node.getchildren()
-        remainder = txt[cur_offset:end_offset]
-
-        if childnodes:
-            childnodes[-1].tail = remainder
-        else:
-            node.text = remainder
-
-    return inserted
+    return txt
 
 
 def is_person(item):
@@ -320,3 +167,121 @@ def is_place(item):
     item_types = [i.strip() for i in item['types'].split(',')]
     return 'DBpedia:Place' in item_types
 
+
+def annotate_xml(node, result):
+    '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
+    that dbpedia annotate was called on the **normalized** text from this node.
+    Currently updates the node that is passed in; whitespace will be normalized in text
+    nodes where name tags are inserted.
+
+    :param node: lxml element node to be updated
+    :param result: dbpedia spotlight result, as returned by
+        :meth:`namedropper.spotlight.SpotlightClient.annotate`
+
+    :returns: total count of the number of entities inserted into the xml
+    '''
+
+    # assuming TEI tags for now
+    name_tag = 'name'
+    # create the new node in the same namespace as its parent
+    if node.nsmap and node.prefix in node.nsmap:
+        name_tag = '{%s}%s' % (node.nsmap[node.prefix], name_tag)
+
+    # find all text nodes under this node
+    text_list = node.xpath('.//text()')
+
+    # get the list of identified resources from the dbpedia spotlight result
+    resources = list(result['Resources'])
+
+    # starting values
+    current_offset = 0  # current index into the node
+    inserted = 0  # number of items inserted into the xml
+    item = None  # current dbpedia item being processed
+    prev_text = ''  # text before the current node (for whitespace normalization)
+
+    # iterate until we run out of text nodes or resources
+    while (item or resources) and text_list:
+        # if there is no current item, get the next item
+        if item is None:
+            item = resources.pop(0)
+            item_offset = int(item['offset'])
+            item_end_offset = item_offset + len(item['surfaceForm'])
+
+        # current text node to be updated
+        text_node = text_list.pop(0)
+        next_text = text_list[0] if text_list else ''
+        normalized_text = normalize_whitespace(str(text_node), next_text, prev_text)
+        text_end_offset = current_offset + len(normalized_text)
+        # get the parent node for the current text
+        parent_node = text_node.getparent()
+        # find node immediately after current text node before changing anything
+        next_nodes = parent_node.getparent().xpath('.//node()[preceding-sibling::text() = "%s"][1]' % text_node)
+        if next_nodes:
+            next_node = next_nodes[0]
+
+        else:
+            next_node = None
+
+        # next resource is inside the current text
+        if item_offset >= current_offset and item_end_offset <= text_end_offset:
+            # text before the item: beginning of this node up to relative item offset
+            text_before = normalized_text[:item_offset - current_offset]
+            # text after the item: end item offset to end of text, relative to current offset
+            text_after = normalized_text[item_end_offset - current_offset:]
+
+            # update current text node with the text before the item
+            if text_node == text_node.getparent().text:
+                text_node.getparent().text = text_before
+            elif text_node == text_node.getparent().tail:
+                text_node.getparent().tail = text_before
+                # override the parent node: name tag should be inserted in the
+                # true parent node, not the preceding node
+                parent_node = parent_node.getparent()
+
+            # insert a node for the item
+            attributes = {'res': item['URI']}
+            name_type = None
+            if is_person(item):
+                name_type = 'person'
+            elif is_org(item):
+                name_type = 'org'
+            elif is_place(item):
+                name_type = 'place'
+            if name_type:
+                attributes['type'] = name_type
+
+            item_tag = node.makeelement(name_tag, attrib=attributes,
+                nsmap=node.nsmap)
+            # text content of the node is the recognized form of the name
+            item_tag.text = item['surfaceForm']
+
+            # if there is a node immediately after current text, insert new node before it
+            if next_node is not None:
+                node_index = parent_node.index(next_node)
+                parent_node.insert(node_index, item_tag)
+            # otherwise, just append at the end of the parent node
+            else:
+                parent_node.append(item_tag)
+            inserted += 1  # update item tag count
+
+            # new current offset is the end of the last item
+            current_offset = item_end_offset
+
+            # clear item to indicate next one should be grabbed
+            item = None
+            # set text after the item to the "tail" text of the new item tag
+            item_tag.tail = text_after
+
+            # set the remainder text as the next text node to be processed
+            # - find via text so we have a "smart string" / lxml element string with getparent()
+            remainder_node = parent_node.xpath('.//text()[. = "%s"]' % text_after)[0]
+            text_list.insert(0, remainder_node)
+            prev_text = item_tag.text
+
+        # the next item is not inside the current text node
+        # update offsets and previous text for the next loop
+        else:
+            current_offset += len(normalized_text)
+            prev_text = str(text_node)
+
+    return inserted
