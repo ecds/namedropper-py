@@ -85,6 +85,8 @@ class LookupNames(object):
 
         self.sc = spotlight.SpotlightClient(**spotlight_args)
 
+        # TODO: first check that file exists and is readable! otherwise, messy error...
+
         if self.args.input == 'text':
             # NOTE: would probably need to be read / processed in chunks
             # if we want to handle text files of any significant size
