@@ -12,7 +12,6 @@ Authority File).
 .. _DBpedia Spotlight: http://spotlight.dbpedia.org/
 .. _VIAf: http://viaf.org
 
-
 Installation
 ------------
 
@@ -22,6 +21,9 @@ to install the latest released version of this package and its dependencies::
     $ pip install namedropper
 
 This will also make the ``lookup-names`` script available.
+
+More detailed documentation, including script usage information, is available
+at http://namedropper.readthedocs.org/
 
 Developer notes.
 ----------------
