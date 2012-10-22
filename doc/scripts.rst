@@ -60,17 +60,22 @@ tune the confidence and support options for a given corpus), use the
 Generate XML with tagged names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To generate a new version of your document with identified resources tagged,
-use the ``--output`` (or ``-o``) option and specify the name of the filename
-where you want the new version to be saved.  Note that this feature is
-somewhat experimental.  Before using it, you should first run the script and
-output the DBpedia annotation scores so that you can fine-tune the results to
-exclude as many as bogus results as you can (e.g., by increasing the minimum
-support score).  It is also recommended to restrict the types to persons,
-places, and organizations (i.e., use ``--types Person,Place,Organisation``).
-You should, of course, carefully review changes made to the output file before
-accepting or using them.
+To generate a new version of your EAD or TEI document with identified
+resources tagged, use the ``--output`` (or ``-o``) option and specify the name
+of the filename where you want the new version to be saved.  Note that this
+feature is somewhat experimental.  Before using it, you should first run the
+script and output the DBpedia annotation scores so that you can fine-tune the
+results to exclude as many as bogus results as you can (e.g., by increasing
+the minimum support score).  It is also recommended to restrict the types to
+persons, places, and organizations (i.e., use ``--types Person,Place,Organisation``).
+You should, of course, carefully review changes made to the output file before accepting
+or using them.
 
-Output tagging currenly only supports **TEI**.
+.. Note::
 
-
+  Due to the limitations of the software (DBpedia -> VIAF lookup is currently
+  only implemented for personal names) and EAD name tags, which have
+  attributes for authority control numbers (such as VIAF), but cannot
+  reference a resource URI such as a DBpedia reference, non-personal names
+  tagged in EAD will currently be added without any identifier or reference to
+  the entity returned by DBpedia Spotlight.

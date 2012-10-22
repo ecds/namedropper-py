@@ -38,7 +38,9 @@ class LookupNames(object):
             help='look up VIAF identifiers for recognized Person entities')
 
         parser.add_argument('--output', '-o', dest='output_file',
-            help='Update TEI with recognized names and output as specified file (EXPERIMENTAL)')
+        help='''Generate an updated XML file with recognized names as the
+        specified filename; it is recommended to restrict types to
+        Person, Place, and/or Organisation (semi-EXPERIMENTAL)''')
 
         # tei option (TODO: probably should be required if input is tei)
         tei_opts = parser.add_argument_group('TEI options')
