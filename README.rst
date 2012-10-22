@@ -18,7 +18,7 @@ Installation
 We recommend the use of `pip <http://www.pip-installer.org/en/latest/index.html>`_
 to install the latest released version of this package and its dependencies::
 
-    $ pip install namedropper
+    pip install namedropper
 
 This will also make the ``lookup-names`` script available.
 
