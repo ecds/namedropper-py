@@ -1,5 +1,5 @@
 # file namedropper-py/doc/conf.py
-# 
+#
 #   Copyright 2012 Emory University Library
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,18 @@
 #   limitations under the License.
 
 # namedropper documentation build configuration file
+
+import os
+import sys
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+if on_rtd:
+    # read the docs build is failing because code is in a submodule
+    # attempt to fix by adding module directory to python path
+    docs_dir = os.path.dirname(os.path.abspath(__file__))
+    module_dir = os.path.join(docs_dir, '..')
+    sys.path.append(module_dir)
 
 import namedropper
 
