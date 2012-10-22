@@ -211,7 +211,7 @@ def annotate_xml(node, result, mode='tei'):
         # current text node to be updated
         text_node = text_list.pop(0)
         next_text = text_list[0] if text_list else ''
-        normalized_text = normalize_whitespace(str(text_node), next_text, prev_text)
+        normalized_text = normalize_whitespace(unicode(text_node), next_text, prev_text)
         text_end_offset = current_offset + len(normalized_text)
         # get the parent node for the current text
         parent_node = text_node.getparent()
@@ -249,6 +249,9 @@ def annotate_xml(node, result, mode='tei'):
             elif is_place(item):
                 tei_type = 'place'
                 ead_tag = 'geogname'
+            else:
+                # use generic fallback tag for ead if we can't identify the resource type
+                ead_tag = 'name'
 
             if mode == 'tei':
                 attributes = {'res': item['URI']}
@@ -263,9 +266,11 @@ def annotate_xml(node, result, mode='tei'):
                 # EAD can't reference dbpedia URI; lookup in VIAF
                 attributes = {}
                 if ead_tag == 'persname':
-                    viafid = get_viafid(item['URI'])
+                    viafid = get_viafid(item)
                     if viafid:
                         attributes = {'source': 'viaf', 'authfilenumber': viafid}
+                    else:
+                        logger.info('VIAF id not foud for %s' % item['surfaceForm'])
 
             item_tag = node.makeelement(name_tag, attrib=attributes,
                 nsmap=node.nsmap)
