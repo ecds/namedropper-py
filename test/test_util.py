@@ -24,7 +24,6 @@ from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
 from mock import patch
 
 from namedropper.util import autodetect_file_type, annotate_xml, is_person, is_place, is_org
-from testcore import main
 from fixtures import ilnnames_annotations, hobsbaum_annotations
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -285,8 +284,3 @@ class AnnotateXmlTest(unittest.TestCase):
             self.assertEqual(result['surfaceForm'], names[i].text)
             # TODO: test viaf id lookup ? (at least for persons)
             #self.assertEqual(result['URI'], names[i].get('res'))
-
-
-if __name__ == '__main__':
-    main()
-

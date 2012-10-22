@@ -12,9 +12,15 @@ If you want to run unit tests or generate documentation, install development dep
 
     pip install -r pip-dev-req.txt
 
-To run unit tests::
+To run all unit tests::
 
-    env PYTHONPATH=.:test python test/test_all.py
+    nosetests   # for normal development
+    nosetests --with-coverage --cover-package=namedropper --cover-xml --with-xunit   # for continuous integration
+
+To run unit tests for a specific module, use syntax like this::
+
+    nosetests test/test_spotlight.py
+
 
 To generate sphinx documentation::
 

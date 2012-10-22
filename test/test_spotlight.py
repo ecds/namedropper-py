@@ -20,7 +20,6 @@ import unittest
 from mock import patch, Mock
 
 from namedropper.spotlight import SpotlightClient
-from testcore import main
 
 
 @patch('namedropper.spotlight.requests')
@@ -96,9 +95,3 @@ class SpotlightClientTest(unittest.TestCase):
         # TODO: test larger text / post
 
         # TODO: simulate error
-
-    # TODO: test _clean_response
-
-
-if __name__ == '__main__':
-    main()

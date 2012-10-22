@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# file namedropper-py/test/test_all.py
+# file namedropper-py/test/__init__.py
 #
 #   Copyright 2012 Emory University Library
 #
@@ -16,12 +16,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from testcore import main
-
 # import test modules here for auto-discovery
 from test_spotlight import *
 from test_util import *
-
-if __name__ == '__main__':
-    main()
-

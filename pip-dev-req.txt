@@ -1,4 +1,4 @@
 mock
 sphinx
 coverage
-unittest-xml-reporting
+nose
