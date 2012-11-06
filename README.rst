@@ -25,13 +25,20 @@ This will also make the ``lookup-names`` script available.
 More detailed documentation, including script usage information, is available
 at http://namedropper.readthedocs.org/
 
-Developer notes.
-----------------
+Developer notes
+---------------
 
-If you want to run unit tests or build sphinx documentation, you should also
-install development dependencies::
+To install dependencies for your local check out of the code, run ``pip install``
+in the ``namedropper-py`` directory (the use of `virtualenv`_ is recommended)::
 
-    pip install -r pip-dev-req.txt
+    pip install .
+
+.. _virtualenv: http://www.virtualenv.org/en/latest/
+
+If you want to run unit tests or build sphinx documentation, you will also
+need to install development dependencies::
+
+    pip install namedropper[dev]
 
 To run all unit tests::
 
