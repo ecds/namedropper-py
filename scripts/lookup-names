@@ -6,6 +6,7 @@ from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
 from requests.exceptions import HTTPError
 import sys
+import csv
 
 from namedropper import spotlight, util
 
@@ -23,6 +24,10 @@ class LookupNames(object):
 
     _unique_names = set()
 
+    # number of characters on either side of an entity in the 
+    # text to include in the context of the csv_file
+    __context_pad = 100
+
     def __init__(self):
         # parse command-line arguments and init spotlight client
         parser = argparse.ArgumentParser(description='Look up named entities in a file.')
@@ -38,9 +43,11 @@ class LookupNames(object):
             help='look up VIAF identifiers for recognized Person entities')
 
         parser.add_argument('--output', '-o', dest='output_file',
-        help='''Generate an updated XML file with recognized names as the
-        specified filename; it is recommended to restrict types to
-        Person, Place, and/or Organisation (semi-EXPERIMENTAL)''')
+            help='''Generate an updated XML file with recognized names as the
+            specified filename; it is recommended to restrict types to
+            Person, Place, and/or Organisation (semi-EXPERIMENTAL)''')
+        parser.add_argument('--csv', dest='csv_file',
+            help=''' Generate a CSV file with recognized names, uri, similarity score, support score, and context''')
 
         # tei option (TODO: probably should be required if input is tei)
         tei_opts = parser.add_argument_group('TEI options')
@@ -78,6 +85,20 @@ class LookupNames(object):
             print 'Error! --tei-xpath is required when input document is TEI\n'
             parser.print_help()
             exit(-1)
+
+        self.csv_writer = None
+        if self.args.csv_file:
+            #init self.csv_writer
+            self.csv_writer = csv.writer(open(self.args.csv_file, 'wb'))
+
+            #early exit if we don't have csv writer
+            if self.args.csv_file and not self.csv_writer:
+                print >> sys.stderr, "CSV output file could not be created"
+                exit(-1)
+
+            # write the header row of the CSV file
+            # done here because in certain modes it will call populate_csv_from_results more than once
+            self.csv_writer.writerow(["Name", "URI", "Similarity Score", "Support Score", "Context"])
 
         spotlight_args = {'base_url': self.args.dbpedia_url,
             'confidence': self.args.confidence, 'support': self.args.support,
@@ -178,6 +199,9 @@ class LookupNames(object):
         try:
             results = self.sc.annotate(text)
             self.last_results = results
+
+            if self.args.csv_file:
+                self.populate_csv_from_results(results)
         except HTTPError as err:
             # for now, assume any error means the service is unavailable
             # and exit the script (could check status for more fine-grained response)
@@ -189,6 +213,21 @@ class LookupNames(object):
             return []
         else:
             return results['Resources']
+
+    def populate_csv_from_results(self, results):
+        # loop through results to populate rows in csv
+        for result in results['Resources']:
+            # start and end indexes for grabbing context around the entity
+            sub_start = max(0, int(result['offset']) - self.__context_pad)
+            sub_end = min(len(results['text']), int(result['offset']) + len(result['surfaceForm']) + self.__context_pad)
+
+            self.csv_writer.writerow([
+                    result['surfaceForm'],
+                    result['URI'],
+                    result['similarityScore'],
+                    result['support'],
+                    results['text'][sub_start:sub_end] #slice text based on start and end
+                ])
 
     def list_names(self, text):
         # run spotlight annotation on a text string and print out identified
