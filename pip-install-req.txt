@@ -1,3 +1,5 @@
+# NOTE: this requirements file is needed for building docs on readthedocs.org
+# If you add something here, you must also add it to setup.py
 requests
 eulxml
 rdflib

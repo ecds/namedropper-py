@@ -12,24 +12,33 @@ Authority File).
 .. _DBpedia Spotlight: http://spotlight.dbpedia.org/
 .. _VIAf: http://viaf.org
 
-
 Installation
 ------------
 
 We recommend the use of `pip <http://www.pip-installer.org/en/latest/index.html>`_
 to install the latest released version of this package and its dependencies::
 
-    $ pip install namedropper
+    pip install namedropper
 
 This will also make the ``lookup-names`` script available.
 
-Developer notes.
-----------------
+More detailed documentation, including script usage information, is available
+at http://namedropper.readthedocs.org/
 
-If you want to run unit tests or build sphinx documentation, you should also
-install development dependencies::
+Developer notes
+---------------
 
-    pip install -r pip-dev-req.txt
+To install dependencies for your local check out of the code, run ``pip install``
+in the ``namedropper-py`` directory (the use of `virtualenv`_ is recommended)::
+
+    pip install .
+
+.. _virtualenv: http://www.virtualenv.org/en/latest/
+
+If you want to run unit tests or build sphinx documentation, you will also
+need to install development dependencies::
+
+    pip install namedropper[dev]
 
 To run all unit tests::
 
