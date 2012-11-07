@@ -254,7 +254,7 @@ class LookupNames(object):
     def print_name(self, name, uri, similarity_score=None, support=None):
         # if args.scores is set and values are availble, include similarity/support
         if self.args.scores and similarity_score and support:
-            print '-%s  %s (%.2f, %s)' % (name.ljust(40), uri, float(similarity_score), support)
+            print '%s  %s (%.2f, %s)' % (name.ljust(40), uri, float(similarity_score), support)
         else:
             print '%s  %s' % (name.ljust(40), uri)
 
