@@ -198,7 +198,12 @@ def annotate_xml(node, result, mode='tei'):
     current_offset = 0  # current index into the node
     inserted = 0  # number of items inserted into the xml
     item = None  # current dbpedia item being processed
-    prev_text = ''  # text before the current node (for whitespace normalization)
+
+    # aggregate of all normalized text before the current node
+    # (used for whitespace normalization on the current node)
+    # NOTE: aggregating all previous text in order to properly handle cases where there
+    # are multiple whitespace-only nodes in a row
+    prev_text = ''
 
     # iterate until we run out of text nodes or resources
     while (item or resources) and text_list:
@@ -207,6 +212,7 @@ def annotate_xml(node, result, mode='tei'):
             item = resources.pop(0)
             item_offset = int(item['offset'])
             item_end_offset = item_offset + len(item['surfaceForm'])
+            print 'No item, popping offset=%d %s' % (item_offset, item['surfaceForm'])
 
         # current text node to be updated
         text_node = text_list.pop(0)
@@ -299,12 +305,15 @@ def annotate_xml(node, result, mode='tei'):
             remainder_node = item_tag.xpath('./following-sibling::text()[1]')[0]
 
             text_list.insert(0, remainder_node)
-            prev_text = item_tag.text
+            # add current processed text to previous
+            prev_text += text_before + item_tag.text
 
         # the next item is not inside the current text node
-        # update offsets and previous text for the next loop
+        # update offsets and previous text for the next loop,
+        # still looking for the current item
         else:
             current_offset += len(normalized_text)
-            prev_text = unicode(text_node)
+            # append the processed text to previous
+            prev_text += normalized_text
 
     return inserted
