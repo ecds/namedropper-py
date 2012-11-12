@@ -305,6 +305,6 @@ def annotate_xml(node, result, mode='tei'):
         # update offsets and previous text for the next loop
         else:
             current_offset += len(normalized_text)
-            prev_text = str(text_node)
+            prev_text = unicode(text_node)
 
     return inserted
