@@ -254,7 +254,7 @@ def annotate_xml(node, result, mode='tei'):
                 ead_tag = 'name'
 
             if mode == 'tei':
-                attributes = {'res': item['URI']}
+                attributes = {'ref': item['URI']}
                 if tei_type:
                     attributes['type'] = tei_type
             elif mode == 'ead':

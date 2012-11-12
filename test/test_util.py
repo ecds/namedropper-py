@@ -79,7 +79,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__end_tag(self):
@@ -106,7 +106,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__mid_tag(self):
@@ -137,7 +137,7 @@ class AnnotateXmlTest(unittest.TestCase):
             elif is_place(result):
                 self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__empty_mid_tag(self):
@@ -164,7 +164,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__start_tag(self):
@@ -190,7 +190,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__multiple_nested(self):
@@ -216,7 +216,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__with_bibl(self):
@@ -245,7 +245,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     @patch('namedropper.util.get_viafid')       # patch to ensure we don't hit VIAF in unit tests
@@ -283,4 +283,4 @@ class AnnotateXmlTest(unittest.TestCase):
             # value should match dbpedia result
             self.assertEqual(result['surfaceForm'], names[i].text)
             # TODO: test viaf id lookup ? (at least for persons)
-            #self.assertEqual(result['URI'], names[i].get('res'))
+            #self.assertEqual(result['URI'], names[i].get('ref'))
