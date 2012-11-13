@@ -226,9 +226,6 @@ class AnnotateXmlTest(unittest.TestCase):
         text_content = article.xpath('normalize-space(.)')
         inserted = annotate_xml(article, annotations)
 
-        from lxml.etree import tostring
-        print tostring(article, pretty_print=True)
-
         names = article.xpath('.//t:name', **self.tei_ns)
 
         # inspect the tags that were inserted
@@ -281,12 +278,13 @@ class AnnotateXmlTest(unittest.TestCase):
         # inspect the tags that were inserted
         names = paragraph.xpath('.//e:persname|.//e:corpname|.//e:geogname', **self.ead_ns)
         expected = len(annotations['Resources'])
+        self.assertEqual(expected, inserted,
+            'resources identified in spotlight result should match reported inserted count (expected %d, got %d)' \
+            % (expected, inserted))
         got = len(names)
         self.assertEqual(expected, got,
             'resources identified in dbpedia spotlight result should be tagged in the xml (expected %d, got %d)' \
             % (expected, got))
-        self.assertEqual(len(annotations['Resources']), inserted,
-            'resources identified in spotlight result should match reported inserted count')
 
         # normalized text should be the same before and after
         self.assertEqual(text_content, paragraph.xpath('normalize-space(.)'))
