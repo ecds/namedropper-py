@@ -204,6 +204,20 @@ service."</p></div2>
 
 </div2>
 
+<!-- article above with names already tagged -->
+<div2 xml:id="iln38.1069.006a" n="[Advices had been received]" type="Article">
+               <head>[Advices had been received]</head>
+               <bibl>
+                  <title>The Illustrated London News</title>
+                  <biblScope type="volume">vol. 38</biblScope>
+                  <biblScope type="issue">no. 1069</biblScope>
+                  <biblScope type="pages">p. 27</biblScope>
+                  <date when="1861-01-12">January 12, 1861</date>
+               <extent>1 paragraph</extent><idno type="ark">http://pid.emory.edu/ark:/25593/18k</idno></bibl>
+    <p>Advices had been received at <name ref="http://dbpedia.org/resource/Baltimore" type="place">Baltimore</name> stating that the <name ref="http://dbpedia.org/resource/Dominican_Republic" type="place">Dominican</name> Government had taken forcible possession of the guano islands in the Caribbean Sea belonging to <name ref="http://dbpedia.org/resource/Americas" type="place">America</name>.</p>
+
+</div2>
+
 </div1>
 </body>
 </text>

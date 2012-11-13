@@ -212,7 +212,24 @@ def annotate_xml(node, result, mode='tei'):
             item = resources.pop(0)
             item_offset = int(item['offset'])
             item_end_offset = item_offset + len(item['surfaceForm'])
-            print 'No item, popping offset=%d %s' % (item_offset, item['surfaceForm'])
+
+            # determine tag name to be used for this item
+            tei_type = None
+            if is_person(item):
+                tei_type = 'person'
+                ead_tag = 'persname'
+            elif is_org(item):
+                tei_type = 'org'
+                ead_tag = 'corpname'
+            elif is_place(item):
+                tei_type = 'place'
+                ead_tag = 'geogname'
+            else:
+                # use generic fallback tag for ead if we can't identify the resource type
+                ead_tag = 'name'
+
+            if mode == 'ead':
+                name_tag = ead_tag
 
         # current text node to be updated
         text_node = text_list.pop(0)
@@ -228,8 +245,53 @@ def annotate_xml(node, result, mode='tei'):
         elif text_node == parent_node.tail:
             next_node = parent_node.getnext()   # next sibling or None
 
+        # special case - exact match (i.e., the detected name is already tagged)
+        if item_offset == current_offset and item_end_offset == text_end_offset \
+            and parent_node.tag[len(parent_node.prefix or ''):] == name_tag:
+            # update attributes if not already set; otherwise, warn
+            # about the info that is not being saved to avoid overwriting existing data
+
+            # TODO: redundant logic; consolidate with new tag attribute logic below
+            if mode == 'tei':
+                ref = parent_node.get('ref', None)
+                # if no ref attribute is present, add one
+                if ref is None:
+                    parent_node['ref'] = item['URI']
+                # if already set and different to the new value, warn
+                elif item['URI'] != ref:
+                    logger.warn('Not setting ref to %s because it is already set as %' \
+                        % (item['URI'], ref))
+
+                if parent_node.get('type', None) is None:
+                    parent_node['type'] = tei_type
+                # not warning if type is already set; seems less crucial than losing the URI
+
+            elif mode == 'ead' and name_tag == 'persname':
+                # NOTE: currently only support viaf lookup for persname
+                src = parent_node.get('source', None)
+                authnumber = parent_node.get('authfilenumber', None)
+                if src is not None and authnumber is not None:
+                    viafid = get_viafid(item)
+                    if viafid:
+                        parent_node['source'] = 'viaf'
+                        parent_node['authfilenumber'] = viafid
+                        attributes = {'source': 'viaf', 'authfilenumber': viafid}
+                    else:
+                        logger.info('VIAF id not found for %s' % item['surfaceForm'])
+                else:
+                    logger.warn('Not looking up VIAF id because source or authfilenumber for %s is already set' \
+                        % item['surfaceForm'])
+
+            # new current offset is the end of the last item
+            current_offset = item_end_offset
+
+            # clear item to indicate next one should be grabbed
+            item = None
+            # add current processed text to previous
+            prev_text += parent_node.text
+
         # next resource is inside the current text
-        if item_offset >= current_offset and item_end_offset <= text_end_offset:
+        elif item_offset >= current_offset and item_end_offset <= text_end_offset:
             # text before the item: beginning of this node up to relative item offset
             text_before = normalized_text[:item_offset - current_offset]
             # text after the item: end item offset to end of text, relative to current offset
@@ -243,21 +305,6 @@ def annotate_xml(node, result, mode='tei'):
                 # override the parent node: name tag should be inserted in the
                 # true parent node, not the preceding node
                 parent_node = parent_node.getparent()
-
-            # insert a node for the item
-            tei_type = None
-            if is_person(item):
-                tei_type = 'person'
-                ead_tag = 'persname'
-            elif is_org(item):
-                tei_type = 'org'
-                ead_tag = 'corpname'
-            elif is_place(item):
-                tei_type = 'place'
-                ead_tag = 'geogname'
-            else:
-                # use generic fallback tag for ead if we can't identify the resource type
-                ead_tag = 'name'
 
             if mode == 'tei':
                 attributes = {'ref': item['URI']}
@@ -276,7 +323,7 @@ def annotate_xml(node, result, mode='tei'):
                     if viafid:
                         attributes = {'source': 'viaf', 'authfilenumber': viafid}
                     else:
-                        logger.info('VIAF id not foud for %s' % item['surfaceForm'])
+                        logger.info('VIAF id not found for %s' % item['surfaceForm'])
 
             item_tag = node.makeelement(name_tag, attrib=attributes,
                 nsmap=node.nsmap)

@@ -226,6 +226,9 @@ class AnnotateXmlTest(unittest.TestCase):
         text_content = article.xpath('normalize-space(.)')
         inserted = annotate_xml(article, annotations)
 
+        from lxml.etree import tostring
+        print tostring(article, pretty_print=True)
+
         names = article.xpath('.//t:name', **self.tei_ns)
 
         # inspect the tags that were inserted
@@ -247,6 +250,25 @@ class AnnotateXmlTest(unittest.TestCase):
             # uri & value should match dbpedia result
             self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
+
+    def test_annotate_xml__with_existing_tags(self):
+        # article with names already tagged
+        annotations = ilnnames_annotations.article4_result
+        article = self.tei.node.xpath('//t:div2[@xml:id="iln38.1069.006a"]', **self.tei_ns)[0]
+        existing_names = article.xpath('.//t:name', **self.tei_ns)
+        inserted = annotate_xml(article, annotations)
+
+        names = article.xpath('.//t:name', **self.tei_ns)
+
+        # inspect the tags that were inserted
+        expected = len(annotations['Resources'])
+        got = len(names)
+        # number of tagged names should not increase
+        self.assertEqual(expected, got,
+            'resources identified in dbpedia spotlight result should be tagged in the xml (expected %d, got %d)' \
+            % (expected, got))
+        self.assertEqual(len(annotations['Resources']) - len(existing_names), inserted,
+            'inserted count should match number of identified resources minus count of existing tagged names')
 
     @patch('namedropper.util.get_viafid')       # patch to ensure we don't hit VIAF in unit tests
     def test_ead(self, mock_viafid):
