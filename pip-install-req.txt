@@ -5,4 +5,4 @@ eulxml
 rdflib
 SPARQLWrapper
 feedparser
-
+unicodecsv

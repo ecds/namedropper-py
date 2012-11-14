@@ -172,7 +172,16 @@ def annotate_xml(node, result, mode='tei'):
     '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
     that dbpedia annotate was called on the **normalized** text from this node.
     Currently updates the node that is passed in; whitespace will be normalized in text
-    nodes where name tags are inserted.
+    nodes where name tags are inserted.  For TEI, DBpedia URIs are inserted as
+    **ref** attributes; since EAD does not support referencing URIs, VIAF ids
+    will be used where possible (currently only supports lookup for personal names).
+
+    If recognized names are already tagged as names in the existing XML, no
+    new name tag will be inserted; attributes will only be added if they are not
+    present in the original node.
+
+    Currently using :mod:`logging` (info and warn) when VIAF look-up fails or
+    attributes are not inserted to avoid overwriting existing values.
 
     :param node: lxml element node to be updated
     :param result: dbpedia spotlight result, as returned by
@@ -181,7 +190,7 @@ def annotate_xml(node, result, mode='tei'):
     :returns: total count of the number of entities inserted into the xml
     '''
 
-    # TEI tags for now
+    # TEI tags will all use name
     if mode == 'tei':
         name_tag = 'name'
         # create the new node in the same namespace as its parent
@@ -198,7 +207,12 @@ def annotate_xml(node, result, mode='tei'):
     current_offset = 0  # current index into the node
     inserted = 0  # number of items inserted into the xml
     item = None  # current dbpedia item being processed
-    prev_text = ''  # text before the current node (for whitespace normalization)
+
+    # aggregate of all normalized text before the current node
+    # (used for whitespace normalization on the current node)
+    # NOTE: aggregating all previous text in order to properly handle cases where there
+    # are multiple whitespace-only nodes in a row
+    prev_text = ''
 
     # iterate until we run out of text nodes or resources
     while (item or resources) and text_list:
@@ -207,6 +221,29 @@ def annotate_xml(node, result, mode='tei'):
             item = resources.pop(0)
             item_offset = int(item['offset'])
             item_end_offset = item_offset + len(item['surfaceForm'])
+
+            # determine the tag name to be used for this item
+            # TODO/NOTE: might be worth refactoring tag name/attribute logic into
+            # a separate function
+            tei_type = None
+            if is_person(item):
+                tei_type = 'person'
+                ead_tag = 'persname'
+            elif is_org(item):
+                tei_type = 'org'
+                ead_tag = 'corpname'
+            elif is_place(item):
+                tei_type = 'place'
+                ead_tag = 'geogname'
+            else:
+                # use generic fallback tag for ead if we can't identify the resource type
+                ead_tag = 'name'
+
+            if mode == 'ead':
+                name_tag = ead_tag
+                # create the new node in the same namespace as its parent
+                if node.nsmap and node.prefix in node.nsmap:
+                    name_tag = '{%s}%s' % (node.nsmap[node.prefix], name_tag)
 
         # current text node to be updated
         text_node = text_list.pop(0)
@@ -229,39 +266,54 @@ def annotate_xml(node, result, mode='tei'):
             # text after the item: end item offset to end of text, relative to current offset
             text_after = normalized_text[item_end_offset - current_offset:]
 
-            # update current text node with the text before the item
-            if text_node == text_node.getparent().text:
-                text_node.getparent().text = text_before
-            elif text_node == text_node.getparent().tail:
-                text_node.getparent().tail = text_before
-                # override the parent node: name tag should be inserted in the
-                # true parent node, not the preceding node
-                parent_node = parent_node.getparent()
+            # special case: exact match on start and end offsets *and* the tag
+            # matches the tag we would insert (i.e., detected name is already tagged)
+            if item_offset == current_offset and item_end_offset == text_end_offset \
+                and parent_node.tag[len(parent_node.prefix or ''):] == name_tag:
+                # store the node so that attributes can be updated if not already set
+                name_node = parent_node
 
-            # insert a node for the item
-            tei_type = None
-            if is_person(item):
-                tei_type = 'person'
-                ead_tag = 'persname'
-            elif is_org(item):
-                tei_type = 'org'
-                ead_tag = 'corpname'
-            elif is_place(item):
-                tei_type = 'place'
-                ead_tag = 'geogname'
             else:
-                # use generic fallback tag for ead if we can't identify the resource type
-                ead_tag = 'name'
+                # update current text node with the text before the item
+                if text_node == text_node.getparent().text:
+                    text_node.getparent().text = text_before
+                elif text_node == text_node.getparent().tail:
+                    text_node.getparent().tail = text_before
+                    # override the parent node: name tag should be inserted in the
+                    # true parent node, not the preceding node
+                    parent_node = parent_node.getparent()
 
+                item_tag = node.makeelement(name_tag, nsmap=node.nsmap)
+                # text content of the node is the recognized form of the name
+                item_tag.text = item['surfaceForm']
+
+                # if there is a node immediately after current text, insert new node before it
+                if next_node is not None:
+                    node_index = parent_node.index(next_node)
+                    parent_node.insert(node_index, item_tag)
+                # otherwise, just append at the end of the parent node
+                else:
+                    parent_node.append(item_tag)
+                inserted += 1  # update item tag count
+
+                name_node = item_tag
+
+                # set text after the item to the "tail" text of the new item tag
+                item_tag.tail = text_after
+
+                # set the remainder text as the next text node to be processed
+                # - find via xpath so we have a "smart string" / lxml element string with getparent()
+                remainder_node = item_tag.xpath('./following-sibling::text()[1]')[0]
+
+                text_list.insert(0, remainder_node)
+
+            # add attributes to the name node (inserted or existing), but don't overwrite
             if mode == 'tei':
-                attributes = {'res': item['URI']}
+                attributes = {'ref': item['URI']}
                 if tei_type:
                     attributes['type'] = tei_type
             elif mode == 'ead':
                 name_tag = ead_tag
-                # create the new node in the same namespace as its parent
-                if node.nsmap and node.prefix in node.nsmap:
-                    name_tag = '{%s}%s' % (node.nsmap[node.prefix], ead_tag)
 
                 # EAD can't reference dbpedia URI; lookup in VIAF
                 attributes = {}
@@ -270,41 +322,37 @@ def annotate_xml(node, result, mode='tei'):
                     if viafid:
                         attributes = {'source': 'viaf', 'authfilenumber': viafid}
                     else:
-                        logger.info('VIAF id not foud for %s' % item['surfaceForm'])
+                        logger.info('VIAF id not found for %s' % item['surfaceForm'])
 
-            item_tag = node.makeelement(name_tag, attrib=attributes,
-                nsmap=node.nsmap)
-            # text content of the node is the recognized form of the name
-            item_tag.text = item['surfaceForm']
+            # set attributes on the newly inserted OR existing name tag
+            for attr, val in attributes.iteritems():
+                current_val = name_node.get(attr, None)
 
-            # if there is a node immediately after current text, insert new node before it
-            if next_node is not None:
-                node_index = parent_node.index(next_node)
-                parent_node.insert(node_index, item_tag)
-            # otherwise, just append at the end of the parent node
-            else:
-                parent_node.append(item_tag)
-            inserted += 1  # update item tag count
+                # add attribute values if they are not already set
+                if current_val is None:
+                    name_node.set(attr, val)
+
+                # Warn and do NOT set if attributes are present (and different)
+                # FIXME: this may need some modification for EAD (since auth/source are a pair)
+                elif current_val != val:
+                    logger.warn('Not setting %s to %s because it already has a value of %s' %\
+                        (attr, val, current_val))
 
             # new current offset is the end of the last item
             current_offset = item_end_offset
 
             # clear item to indicate next one should be grabbed
             item = None
-            # set text after the item to the "tail" text of the new item tag
-            item_tag.tail = text_after
 
-            # set the remainder text as the next text node to be processed
-            # - find via xpath so we have a "smart string" / lxml element string with getparent()
-            remainder_node = item_tag.xpath('./following-sibling::text()[1]')[0]
-
-            text_list.insert(0, remainder_node)
-            prev_text = item_tag.text
+            # add current processed text to previous
+            prev_text += text_before + item_tag.text
 
         # the next item is not inside the current text node
-        # update offsets and previous text for the next loop
+        # update offsets and previous text for the next loop,
+        # still looking for the current item
         else:
             current_offset += len(normalized_text)
-            prev_text = str(text_node)
+            # append the processed text to previous
+            prev_text += normalized_text
 
     return inserted

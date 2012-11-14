@@ -6,7 +6,7 @@ from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
 from requests.exceptions import HTTPError
 import sys
-import csv
+import unicodecsv
 
 from namedropper import spotlight, util
 
@@ -89,7 +89,7 @@ class LookupNames(object):
         self.csv_writer = None
         if self.args.csv_file:
             #init self.csv_writer
-            self.csv_writer = csv.writer(open(self.args.csv_file, 'wb'))
+            self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'), encoding="utf-8")
 
             #early exit if we don't have csv writer
             if self.args.csv_file and not self.csv_writer:
@@ -200,8 +200,6 @@ class LookupNames(object):
             results = self.sc.annotate(text)
             self.last_results = results
 
-            if self.args.csv_file:
-                self.populate_csv_from_results(results)
         except HTTPError as err:
             # for now, assume any error means the service is unavailable
             # and exit the script (could check status for more fine-grained response)
@@ -212,6 +210,9 @@ class LookupNames(object):
         if not results or not 'Resources' in results:
             return []
         else:
+            if self.args.csv_file:
+                self.populate_csv_from_results(results)
+
             return results['Resources']
 
     def populate_csv_from_results(self, results):

@@ -79,7 +79,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__end_tag(self):
@@ -106,7 +106,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__mid_tag(self):
@@ -137,7 +137,7 @@ class AnnotateXmlTest(unittest.TestCase):
             elif is_place(result):
                 self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__empty_mid_tag(self):
@@ -164,7 +164,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__start_tag(self):
@@ -190,7 +190,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__multiple_nested(self):
@@ -216,7 +216,7 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
 
     def test_annotate_xml__with_bibl(self):
@@ -245,8 +245,27 @@ class AnnotateXmlTest(unittest.TestCase):
             result = annotations['Resources'][i]
             self.assertEqual('place', names[i].get('type'))
             # uri & value should match dbpedia result
-            self.assertEqual(result['URI'], names[i].get('res'))
+            self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
+
+    def test_annotate_xml__with_existing_tags(self):
+        # article with names already tagged
+        annotations = ilnnames_annotations.article4_result
+        article = self.tei.node.xpath('//t:div2[@xml:id="iln38.1069.006a"]', **self.tei_ns)[0]
+        existing_names = article.xpath('.//t:name', **self.tei_ns)
+        inserted = annotate_xml(article, annotations)
+
+        names = article.xpath('.//t:name', **self.tei_ns)
+
+        # inspect the tags that were inserted
+        expected = len(annotations['Resources'])
+        got = len(names)
+        # number of tagged names should not increase
+        self.assertEqual(expected, got,
+            'resources identified in dbpedia spotlight result should be tagged in the xml (expected %d, got %d)' \
+            % (expected, got))
+        self.assertEqual(len(annotations['Resources']) - len(existing_names), inserted,
+            'inserted count should match number of identified resources minus count of existing tagged names')
 
     @patch('namedropper.util.get_viafid')       # patch to ensure we don't hit VIAF in unit tests
     def test_ead(self, mock_viafid):
@@ -259,12 +278,13 @@ class AnnotateXmlTest(unittest.TestCase):
         # inspect the tags that were inserted
         names = paragraph.xpath('.//e:persname|.//e:corpname|.//e:geogname', **self.ead_ns)
         expected = len(annotations['Resources'])
+        self.assertEqual(expected, inserted,
+            'resources identified in spotlight result should match reported inserted count (expected %d, got %d)' \
+            % (expected, inserted))
         got = len(names)
         self.assertEqual(expected, got,
             'resources identified in dbpedia spotlight result should be tagged in the xml (expected %d, got %d)' \
             % (expected, got))
-        self.assertEqual(len(annotations['Resources']), inserted,
-            'resources identified in spotlight result should match reported inserted count')
 
         # normalized text should be the same before and after
         self.assertEqual(text_content, paragraph.xpath('normalize-space(.)'))
@@ -283,4 +303,4 @@ class AnnotateXmlTest(unittest.TestCase):
             # value should match dbpedia result
             self.assertEqual(result['surfaceForm'], names[i].text)
             # TODO: test viaf id lookup ? (at least for persons)
-            #self.assertEqual(result['URI'], names[i].get('res'))
+            #self.assertEqual(result['URI'], names[i].get('ref'))
