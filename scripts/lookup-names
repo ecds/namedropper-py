@@ -6,7 +6,7 @@ from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
 from requests.exceptions import HTTPError
 import sys
-import csv
+import unicodecsv
 
 from namedropper import spotlight, util
 
@@ -89,7 +89,7 @@ class LookupNames(object):
         self.csv_writer = None
         if self.args.csv_file:
             #init self.csv_writer
-            self.csv_writer = csv.writer(open(self.args.csv_file, 'wb'))
+            self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'), encoding="utf-8")
 
             #early exit if we don't have csv writer
             if self.args.csv_file and not self.csv_writer:
