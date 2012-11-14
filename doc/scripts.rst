@@ -56,6 +56,18 @@ tune the confidence and support options for a given corpus), use the
   DBpedia Spotlight response times and the fact that individual paragraphs and
   container list descriptions are annotated individually.
 
+CSV output
+^^^^^^^^^^
+
+Use the ``--csv`` option to generate a CSV file with more detailed information
+about recognized names.  Along with the recognized text and the DBpedia URI, this
+includes the support scores and some document context, to allow inspecting the results
+for accuracy and determining a good support score setting for your content.
+
+.. Note::
+
+  When opening the CSV output file in Excel, you should open it as Unicode UTF-8.
+
 
 Generate XML with tagged names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -79,3 +91,4 @@ or using them.
   reference a resource URI such as a DBpedia reference, non-personal names
   tagged in EAD will currently be added without any identifier or reference to
   the entity returned by DBpedia Spotlight.
+
