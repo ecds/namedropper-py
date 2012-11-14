@@ -50,7 +50,8 @@ install_requires = [
     'eulxml',
     'rdflib',
     'SPARQLWrapper',
-    'feedparser'
+    'feedparser',
+    'unicodecsv'
 ]
 
 extras_require = {
