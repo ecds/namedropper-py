@@ -1,14 +1,20 @@
 name-dropper scripts
 ====================
 
+.. image:: https://travis-ci.org/emory-libraries-disc/namedropper-py.png?branch=develop
+  :alt: current build status for namedropper-py
+  :target: https://travis-ci.org/emory-libraries-disc/namedropper-py
+
 Python scripts and utilities for looking up names and linking them to
-authoritative identifiers.
+authoritative identifiers.  See the top-level `namedropper`_ repository
+for more information.
 
 Currently uses `DBpedia Spotlight`_ for recognition of named entities in text,
 with support for matching identified DBpedia resources (currently only for
 Persons) with the equivalent resource in `VIAF`_ (Virtual International
 Authority File).
 
+.. _namedropper: https://github.com/emory-libraries-disc/name-dropper
 .. _DBpedia Spotlight: http://spotlight.dbpedia.org/
 .. _VIAf: http://viaf.org
 
@@ -24,6 +30,13 @@ This will also make the ``lookup-names`` script available.
 
 More detailed documentation, including script usage information, is available
 at http://namedropper.readthedocs.org/
+
+
+License
+=======
+NameDropper Python module and scripts are distributed under the
+`Apache 2.0 License <http://www.apache.org/licenses/LICENSE-2.0>`_.
+
 
 Developer notes
 ---------------
