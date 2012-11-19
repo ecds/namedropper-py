@@ -24,7 +24,7 @@ class LookupNames(object):
 
     _unique_names = set()
 
-    # number of characters on either side of an entity in the 
+    # number of characters on either side of an entity in the
     # text to include in the context of the csv_file
     __context_pad = 100
 
@@ -220,14 +220,18 @@ class LookupNames(object):
         for result in results['Resources']:
             # start and end indexes for grabbing context around the entity
             sub_start = max(0, int(result['offset']) - self.__context_pad)
-            sub_end = min(len(results['text']), int(result['offset']) + len(result['surfaceForm']) + self.__context_pad)
+            sub_end = min(len(results['text']), int(result['offset']) + \
+                len(result['surfaceForm']) + self.__context_pad)
+            # slice to get context around the identified term
+            # normalizing whitespace for plain-text input
+            context = util.normalize_whitespace(results['text'][sub_start:sub_end])
 
             self.csv_writer.writerow([
                     result['surfaceForm'],
                     result['URI'],
                     result['similarityScore'],
                     result['support'],
-                    results['text'][sub_start:sub_end] #slice text based on start and end
+                    context
                 ])
 
     def list_names(self, text):

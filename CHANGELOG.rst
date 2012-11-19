@@ -5,6 +5,12 @@ The following is a summary of changes and improvements to
 :mod:`namedropper`.  New features in each version should be listed, with
 any necessary information about installation or upgrade notes.
 
+0.2.1
+-----
+
+* Normalize whitespace for text context when generating CSV output
+  (primarily affects plain-text input).
+
 0.2
 ---
 
