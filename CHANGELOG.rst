@@ -32,3 +32,4 @@ any necessary information about installation or upgrade notes.
   disambiguation.
 * A command line user can run a script to output recognized names in a TEI XML
   document in order to evaluate automated name recognition and disambiguation.
+
