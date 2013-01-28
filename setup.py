@@ -46,7 +46,7 @@ CLASSIFIERS = [
 # NOTE: a separate requirements file is needed for readthedocs.org
 # If you add something here, you must also add it to pip-install-req.txt
 install_requires = [
-    'requests',
+    'requests>=1.1.0',
     'eulxml',
     'rdflib',
     'SPARQLWrapper',

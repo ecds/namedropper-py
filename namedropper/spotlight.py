@@ -111,7 +111,7 @@ class SpotlightClient(object):
         # for POST, a content-type of application/x-www-form-urlencoded is required
 
         if response.status_code == requests.codes.ok:
-            return self._clean_response(response.json)
+            return self._clean_response(response.json())
 
         # if response was not ok, raise the error
         response.raise_for_status()
