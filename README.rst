@@ -27,7 +27,7 @@ to install the latest released version of this package and its dependencies::
 
     pip install namedropper
 
-This will also make the ``lookup-names`` script available.
+This will also make the ``lookup-names`` and ``count-nametags`` scripts available.
 
 More detailed documentation, including script usage information, is available
 at http://namedropper.readthedocs.org/
