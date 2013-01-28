@@ -10,6 +10,8 @@ from namedropper import scripts
 class CountNameTags(scripts.ScriptBase):
     'Count tagged personal, corporate, and geographic names in an XML document'
 
+    # inheriting default arguments
+
     def run(self):
         if self.args.input == 'tei':
             print >> sys.stderr, 'TEI is not yet supported'

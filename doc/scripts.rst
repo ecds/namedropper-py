@@ -92,3 +92,18 @@ or using them.
   tagged in EAD will currently be added without any identifier or reference to
   the entity returned by DBpedia Spotlight.
 
+count-nametags
+--------------
+
+**count-nametags** is a command-line script for reporting on the number of
+tagged personal, corporate, and geographic names in a document.
+
+For EAD documents, the script reports on the total number of ``persname``,
+``corpname``, and ``geogname`` tags in the specified document and the number
+of name tags with authority control, both the total by source and the
+number of unique identifiers for each type of name.
+
+.. Note::
+
+  Currently only EAD documents are supported.
+

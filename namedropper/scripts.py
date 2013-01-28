@@ -39,15 +39,28 @@ class ScriptBase(object):
     Directions for use:
       - script description, to be displayed via argparse,
         should be set as class doctring
-      - extend :meth:`_init_parser` for additional
+      - extend :meth:`init_parser` for additional
         command-line arguments
       - extend :meth:`run` with main script functionality
 
+    Init method will initialize the argument parser, parse command-line
+    arguments, check that file type is either specified or can be
+    auto-detected, and execute :meth:`run`.
+
+    Parser is saved as :attr:`parser`, in case other script logic
+    needs reference to it.
     '''
 
-    def _init_parser(self):
-        # initialize an argument parser with common arguments
-        # extend to add arguments
+    parser = None
+    ''':class:`argparse.ArgumentParser` instance to be initialized by
+    :meth:`init_parser` at class instantiation.'''
+
+    def init_parser(self):
+        '''Initialize an argument parser with common arguments.
+        Currently includes filename and input type.
+
+        Extend to add arguments.
+        '''
         parser = argparse.ArgumentParser(description=self.__doc__)
         parser.add_argument('filename', metavar='INPUT_FILE', type=str,
             help='name of the file to be processed')
@@ -58,7 +71,7 @@ class ScriptBase(object):
         return parser
 
     def __init__(self):
-        self.parser = self._init_parser()
+        self.parser = self.init_parser()
         self.args = self.parser.parse_args()
 
         # auto-detect input type if not specified
@@ -74,12 +87,15 @@ class ScriptBase(object):
         self.run()
 
     def run(self):
+        'placeholder method - extend with script logic'
         # implement/initiate script logic here
         pass
 
     def init_xml_object(self):
-        # initialize an xmlobject based on user-specified arguments
-        # for filename and type
+        '''Initialize an xmlobject based on user-specified arguments
+        for filename and type.  Returns an instance of the
+        appropriate :class:`~eulxml.xmlmap.XmlObject`, or displays
+        an error message if the document could not be parsed as XML.'''
 
         if self.args.input == 'ead':
             xmlobj_class = EAD
@@ -91,3 +107,5 @@ class ScriptBase(object):
         except Exception as err:
             print 'Error loading %s as XML: %s' % (self.args.filename, err)
             exit(-1)
+
+
