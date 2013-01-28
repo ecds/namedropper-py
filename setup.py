@@ -51,7 +51,7 @@ install_requires = [
     'rdflib',
     'SPARQLWrapper',
     'feedparser',
-    'unicodecsv'
+    'unicodecsv==0.9.0'  # NOTE: temporary; 0.9.3 install is broken
 ]
 
 extras_require = {
