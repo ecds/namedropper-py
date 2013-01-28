@@ -1,35 +1,17 @@
 #!/usr/bin/env python
 
-import argparse
-from eulxml.xmlmap import load_xmlobject_from_file
-from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD, \
-    EAD_NAMESPACE
-from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+from eulxml.xmlmap.eadmap import EAD_NAMESPACE
+from eulxml.xmlmap.teimap import TEI_NAMESPACE
 import sys
 
-from namedropper import util
+from namedropper import scripts
 
 
-class CountNameTags(object):
+class CountNameTags(scripts.ScriptBase):
     'Count tagged personal, corporate, and geographic names in an XML document'
 
-    def __init__(self):
-        # parse command-line arguments and init spotlight client
-        parser = argparse.ArgumentParser(
-            description=self.__doc__)
-        # FIXME: take a list of filenames? does multiple filenames make sense?
-        parser.add_argument('filename', metavar='INPUT_FILE', type=str,
-            help='name of the file to be processed')
-
-        self.args = parser.parse_args()
-
-        # auto-detect input type if not specified
-        self.input_type = util.autodetect_file_type(self.args.filename)
-        # exit if we still don't have an input type
-        if not self.input_type:
-            print >> sys.stderr, 'Could not determine document input type'
-            exit(-1)
-        elif self.input_type == 'tei':
+    def run(self):
+        if self.args.input == 'tei':
             print >> sys.stderr, 'TEI is not yet supported'
             exit(-1)
 
@@ -84,23 +66,6 @@ class CountNameTags(object):
                     if unique_ids:
                         print '    %d unique %s identifiers' % \
                             (len(unique_ids), name_label)
-
-    # FIXME: copied from lookup-names; move to common utils (script baseclass?)
-    def init_xml_object(self):
-        # initialize an xmlobject based on user-specified arguments
-        # for filename and type
-
-        # NOTE: this part is slightly different from lookup-names
-        if self.input_type == 'ead':
-            xmlobj_class = EAD
-        elif self.input_type == 'tei':
-            xmlobj_class = Tei
-
-        try:
-            return load_xmlobject_from_file(self.args.filename, xmlobj_class)
-        except Exception as err:
-            print 'Error loading %s as XML: %s' % (self.args.filename, err)
-            exit(-1)
 
 
 if __name__ == '__main__':

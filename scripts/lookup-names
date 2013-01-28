@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
-from eulxml.xmlmap import load_xmlobject_from_file
-from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
-from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+from eulxml.xmlmap.teimap import TEI_NAMESPACE
 from requests.exceptions import HTTPError
 import sys
 import unicodecsv
 
-from namedropper import spotlight, util
+from namedropper import spotlight, util, scripts
 
 
 class LowerCaseAction(argparse.Action):
@@ -17,26 +15,19 @@ class LowerCaseAction(argparse.Action):
         setattr(namespace, self.dest, value.lower())
 
 
-class LookupNames(object):
-    # object to wrap script functionality
+class LookupNames(scripts.ScriptBase):
+    'Look up named entities in a file.'
 
     _queried_text = set()
-
     _unique_names = set()
 
     # number of characters on either side of an entity in the
     # text to include in the context of the csv_file
     __context_pad = 100
 
-    def __init__(self):
-        # parse command-line arguments and init spotlight client
-        parser = argparse.ArgumentParser(description='Look up named entities in a file.')
-        parser.add_argument('filename', metavar='INPUT_FILE', type=str,
-            help='name of the file to be processed')
-        parser.add_argument('--input', metavar='INPUT_TYPE', type=str,
-            help='type of file to be processed (%(choices)s)',
-            action=LowerCaseAction,
-            choices=['EAD', 'ead', 'tei', 'TEI', 'text'])
+    def _init_parser(self):
+        parser = super(LookupNames, self)._init_parser()
+        # default args include filename and input type
         parser.add_argument('--unique', action='store_true',
             help='only list unique names found anywhere in the content')
         parser.add_argument('--viaf', action='store_true', dest='viaf_lookup', default=False,
@@ -71,34 +62,32 @@ class LookupNames(object):
         # recognized; check if these be tagged/identified in EAD for inclusion
         # - probably do want to exclude dates (don't seem to be recognized in a useful way...)
 
-        self.args = parser.parse_args()
+        self.parser = parser
+        return parser
 
-        # auto-detect input type if not specified
-        if not self.args.input:
-            self.args.input = util.autodetect_file_type(self.args.filename)
-            # exit if we still don't have an input type
-            if not self.args.input:
-                print >> sys.stderr, 'Could not determine document input type; please specify with --input'
-                exit(-1)
-
+    def run(self):
+        # input type auto-detection handled in base class
         if self.args.input == 'tei' and not self.args.tei_xpath:
             print 'Error! --tei-xpath is required when input document is TEI\n'
-            parser.print_help()
+            self.parser.print_help()
             exit(-1)
 
         self.csv_writer = None
         if self.args.csv_file:
             #init self.csv_writer
-            self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'), encoding="utf-8")
+            self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'),
+                encoding="utf-8")
 
-            #early exit if we don't have csv writer
+            # early exit if we don't have csv writer
             if self.args.csv_file and not self.csv_writer:
                 print >> sys.stderr, "CSV output file could not be created"
                 exit(-1)
 
             # write the header row of the CSV file
-            # done here because in certain modes it will call populate_csv_from_results more than once
-            self.csv_writer.writerow(["Name", "URI", "Similarity Score", "Support Score", "Context"])
+            # done here because in certain modes it will call
+            # populate_csv_from_results more than once
+            self.csv_writer.writerow(["Name", "URI", "Similarity Score",
+               "Support Score", "Context"])
 
         spotlight_args = {'base_url': self.args.dbpedia_url,
             'confidence': self.args.confidence, 'support': self.args.support,
@@ -174,22 +163,6 @@ class LookupNames(object):
         if self.args.output_file:
             with open(self.args.output_file, 'w') as outfile:
                 xmlobj.serializeDocument(stream=outfile, pretty=True)
-
-    def init_xml_object(self):
-        # initialize an xmlobject based on user-specified arguments
-        # for filename and type
-
-        # input arg is required, so one of these options should be valid
-        if self.args.input == 'ead':
-            xmlobj_class = EAD
-        elif self.args.input == 'tei':
-            xmlobj_class = Tei
-
-        try:
-            return load_xmlobject_from_file(self.args.filename, xmlobj_class)
-        except Exception as err:
-            print 'Error loading %s as XML: %s' % (self.args.filename, err)
-            exit(-1)
 
     def get_names(self, text):
         # run spotlight annotation on a text string and print out identified
