@@ -9,12 +9,13 @@ Python scripts and utilities for looking up names and linking them to
 authoritative identifiers.  See the top-level `namedropper`_ repository
 for more information.
 
+.. _namedropper: https://github.com/emory-libraries-disc/name-dropper
+
 Currently uses `DBpedia Spotlight`_ for recognition of named entities in text,
 with support for matching identified DBpedia resources (currently only for
 Persons) with the equivalent resource in `VIAF`_ (Virtual International
 Authority File).
 
-.. _namedropper: https://github.com/emory-libraries-disc/name-dropper
 .. _DBpedia Spotlight: http://spotlight.dbpedia.org/
 .. _VIAf: http://viaf.org
 
@@ -44,7 +45,7 @@ Developer notes
 To install dependencies for your local check out of the code, run ``pip install``
 in the ``namedropper-py`` directory (the use of `virtualenv`_ is recommended)::
 
-    pip install .
+    pip install -e .
 
 .. _virtualenv: http://www.virtualenv.org/en/latest/
 
