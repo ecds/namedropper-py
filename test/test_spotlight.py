@@ -79,7 +79,7 @@ class SpotlightClientTest(unittest.TestCase):
         # simulate ok response
         mockrequests.get.return_value.status_code = 200
         mockrequests.codes.ok = 200
-        mockrequests.get.return_value.json = self.sample_result
+        mockrequests.get.return_value.json.return_value = self.sample_result
         result = client.annotate(text)
 
         self.assertEqual(client._clean_response(self.sample_result), result)
