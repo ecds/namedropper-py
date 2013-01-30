@@ -84,5 +84,6 @@ setup(
     classifiers=CLASSIFIERS,
     scripts=[
         'scripts/lookup-names',
+        'scripts/count-nametags',
     ],
 )
