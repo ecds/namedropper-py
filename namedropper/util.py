@@ -68,51 +68,34 @@ def get_viafid(resource):
         :meth:`namedropper.spotlight.SpotlightClient.annotate` results
     :returns: matching VIAF URI, or None if no match was found
     '''
-    uri = resource['URI']
-    if uri not in _viafids:
+    res = spotlight.DBpediaResource(resource['URI'])
+    if res.uri not in _viafids:
         viafid = None
         viafclient = viaf.ViafClient()
 
         # if we haven't already done so, check for viaf id in dbpedia first
-        if uri not in _dbpedia_viaf_lookups:
-            _dbpedia_viaf_lookups.append(uri)
-            viafid = spotlight.dbpedia_viafid(uri)
+        if res.uri not in _dbpedia_viaf_lookups:
+            _dbpedia_viaf_lookups.append(res.uri)
+            viafid = res.viafid
             if viafid:
                 # store url format, for consistency with viaf search results
-                _viafids[uri] = 'http://viaf.org/viaf/%s' % viafid
+                _viafids[res.uri] = 'http://viaf.org/viaf/%s' % viafid
 
-        # if viaf id was not found in dbpedia, use viaf search
+        # if viaf id was not found in dbpedia, look in viaf
         if not viafid:
-            # determine type of resource
-            rsrc_type = None
-            if 'DBpedia:Person' in resource['types']:
-                rsrc_type = 'person'
-            # elif 'DBpedia:Place' in resource['types']:
-            #     rsrc_type = 'place'
-            # elif 'DBpedia:Organisation' in resource['types']:
-            #     rsrc_type = 'corp'
-
-            label = spotlight.dbpedia_label(uri)
             # TODO: fall-back label? what should this actually do here?
-            if not label:
+            if res.label is None:
                 return None
 
             results = []
             # search for corresponding viaf resource by type
-            if rsrc_type == 'person':
-                results = viafclient.find_person(label)
+            if res.is_person:
+                results = viafclient.find_person(res.label)
 
             # NOTE: only persons in VIAF have the dbpedia sameAs rel
-            # How to reliably link places and organizations?
             # For now, only implementing person-name VIAF lookup
 
-            # elif rsrc_type == 'place':
-            #     results = viaf.find_place(label)
-            # elif rsrc_type == 'corp':
-            #     results = viaf.find_corporate(label)
-
             g = Graph()
-            dbpedia_uriref = URIRef(uri)
 
             # iterate through results and look for a result that has
             # an owl:sameAs relation to the dbpedia resource
@@ -121,12 +104,12 @@ def get_viafid(resource):
                 # load the RDF for the VIAF entity and parse as an rdflib graph
                 g.parse(result['link'])
                 # check for the triple we're interested in
-                if (viaf_uriref, OWL['sameAs'], dbpedia_uriref) in g:
+                if (viaf_uriref, OWL['sameAs'], res.uriref) in g:
                     viafid = result['link']
-                    _viafids[uri] = viafid
+                    _viafids[res.uri] = viafid
                     break
 
-    return _viafids.get(uri, None)
+    return _viafids.get(res.uri, None)
 
 
 NORMALIZE_WHITESPACE_RE = re.compile('\s\s+', flags=re.MULTILINE)
@@ -323,6 +306,15 @@ def annotate_xml(node, result, mode='tei'):
                         attributes = {'source': 'viaf', 'authfilenumber': viafid}
                     else:
                         logger.info('VIAF id not found for %s' % item['surfaceForm'])
+
+                # for now, use dbpedia identifiers where no author id is available
+                if not attributes:
+                    # use unique identifier portion of dbpedia uri as id
+                    base_uri, dbpedia_id = item['URI'].rsplit('/', 1)
+                    attributes = {
+                        'source': 'dbpedia',
+                        'authfilenumber': dbpedia_id
+                    }
 
             # set attributes on the newly inserted OR existing name tag
             for attr, val in attributes.iteritems():

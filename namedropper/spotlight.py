@@ -17,8 +17,21 @@
 ## spotlight.py
 
 from datetime import datetime, timedelta
+import logging
+import rdflib
 import requests
-from SPARQLWrapper import SPARQLWrapper, JSON
+import sys
+
+logger = logging.getLogger(__name__)
+
+# TODO: this should probably be split out into a submodule
+
+# RDF namespaces
+DBPPROP = rdflib.Namespace('http://dbpedia.org/property/')
+DBPEDIA_OWL = rdflib.Namespace('http://dbpedia.org/ontology/')
+GEO = rdflib.Namespace('http://www.w3.org/2003/01/geo/wgs84_pos#')
+FOAF = rdflib.Namespace("http://xmlns.com/foaf/0.1/")
+SCHEMA_ORG = rdflib.Namespace('http://schema.org/')
 
 
 class SpotlightClient(object):
@@ -155,45 +168,86 @@ class SpotlightClient(object):
         # from comma-delimited string list into a python list
 
 
-def dbpedia_label(uri, language='EN'):
-    '''Utility method to query DBpedia for the label of a DBpedia resource.
+# TODO: fix decorator so docstrings work on decorated functions
+# TODO: move to a common/utils location
+def cached_property(f):
+    """returns a cached property that is calculated by function f"""
+    # from http://code.activestate.com/recipes/576563-cached-property/
+    def get(self):
+        try:
+            return self._property_cache[f]
+        except AttributeError:
+            self._property_cache = {}
+            x = self._property_cache[f] = f(self)
+            return x
+        except KeyError:
+            x = self._property_cache[f] = f(self)
+            return x
+
+    return property(get)
+
+
+class DBpediaResource(object):
+    '''An object to encapsulate properties and functionality
+    related to a specific dbpedia item.
 
     :param uri: dbpedia resource uri
-    :param language: language of the label to return; defaults to English
+    :param language: optional language code, for multilingual properties
+       like label; defaults to 'en'
     '''
 
-    sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    q = """
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        SELECT ?label
-        WHERE { <%s> rdfs:label ?label
-            FILTER langMatches( lang(?label), "%s" )}
-    """ % (uri, language)
-    sparql.setQuery(q)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
+    def __init__(self, uri, language='en'):
+        self.uri = uri
+        self.uriref = rdflib.URIRef(uri)
+        base_url, self.id = uri.rsplit('/', 1)
+        self.language = language
 
-    # return the label from the first bound result, if found
-    for result in results["results"]["bindings"]:
-        return result["label"]["value"]
+    @cached_property
+    def graph(self):
+        # TODO: use requests/http proxy ?
+        g = rdflib.graph.Graph()
+        # NOTE: might be interesting to log how long this takes
+        logger.info('Loading RDF data for %s' % self.uri)
+        g.load(self.uri)   # NOTE: not documented; actually calls parse
+        return g
 
+    @cached_property
+    def label(self):
+        '''preferred label for this resource, in current language'''
+        results = self.graph.preferredLabel(self.uriref,
+            lang=self.language)
+        if results:
+            return unicode(results[0][1])
 
-def dbpedia_viafid(uri):
-    '''Utility method to query DBpedia for the VIAF id of a DBpedia resource, if available.
+    def _graph_value(self, pred):
+        # convenience method to get the value for a predicate
+        try:
+            return self.graph.value(subject=self.uriref,
+                predicate=pred).toPython()
+        except AttributeError:
+            return None
 
-    :param uri: dbpedia resource uri
-    '''
+    @cached_property
+    def viafid(self):
+        '''VIAF identifier for this resource (generally only available
+            for persons, and not available for all persons)'''
+        return self._graph_value(DBPPROP.viaf)
 
-    sparql = SPARQLWrapper("http://dbpedia.org/sparql")
-    q = """
-        PREFIX dbpprop: <http://dbpedia.org/property/>
-        SELECT ?viafid
-        WHERE { <%s> dbpprop:viaf ?viafid }
-    """ % uri
-    sparql.setQuery(q)
-    sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
+    @cached_property
+    def latitude(self):
+        'latitude (for places)'
+        return self._graph_value(GEO.lat)
 
-    # return the viafid from the first bound result, if one was found
-    for result in results["results"]["bindings"]:
-        return result["viafid"]["value"]
+    @cached_property
+    def longitude(self):
+        'longitude (for places)'
+        return self._graph_value(GEO.long)
+
+    # RDF person types
+    person_types = [FOAF.Person, DBPEDIA_OWL.Person, SCHEMA_ORG.Person]
+
+    @cached_property
+    def is_person(self):
+        'boolean flag to indicate if this resource represents a person'
+        return any(((self.uriref, rdflib.RDF.type, pt) in self.graph
+                for pt in self.person_types))

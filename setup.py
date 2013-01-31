@@ -49,7 +49,6 @@ install_requires = [
     'requests>=1.1.0',
     'eulxml',
     'rdflib',
-    'SPARQLWrapper',
     'feedparser',
     'unicodecsv==0.9.0'  # NOTE: temporary; 0.9.3 install is broken
 ]

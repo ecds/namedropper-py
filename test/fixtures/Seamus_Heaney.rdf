@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rdf:RDF
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:owl="http://www.w3.org/2002/07/owl#"
+	xmlns:dbpedia-owl="http://dbpedia.org/ontology/"
+	xmlns:foaf="http://xmlns.com/foaf/0.1/"
+	xmlns:dbpprop="http://dbpedia.org/property/"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:ns8="http://www.w3.org/ns/prov#" >
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Lord_Byron">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Seamus_Heaney">
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/TranslatorsFromOldEnglish" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/FellowsOfTheRoyalSocietyOfLiterature" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/Writer110794014" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/PeopleOfTheYearAwardsWinners" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/IrishPeople" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/IrishTranslators" />
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Thing" />
+    <rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Person" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/Person100007846" />
+    <rdf:type rdf:resource="http://umbel.org/umbel/rc/Artist" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/LivingPeople" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/TranslatorsFromPolish" />
+    <rdf:type rdf:resource="http://umbel.org/umbel/rc/Writer" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/PoetsFromNorthernIreland" />
+    <rdf:type rdf:resource="http://schema.org/Person" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/DramatistsAndPlaywrightsFromNorthernIreland" />
+    <rdf:type rdf:resource="http://dbpedia.org/ontology/Person" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/FormalistPoets" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/AlumniOfQuEEn&#39;sUniversityBelfast" />
+    <rdf:type rdf:resource="http://dbpedia.org/ontology/Agent" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/NobelLaureatesInLiterature" />
+    <rdf:type rdf:resource="http://dbpedia.org/ontology/Writer" />
+    <rdf:type rdf:resource="http://dbpedia.org/ontology/Artist" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/EssayistsFromNorthernIreland" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/IrishPoets" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/NobelLaureatesFromNorthernIreland" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/PeopleFromCountyLondonderry" />
+    <rdf:type rdf:resource="http://dbpedia.org/class/yago/IrishNobelLaureates" />
+    <owl:sameAs rdf:resource="http://it.dbpedia.org/resource/Séamus_Heaney" />
+    <owl:sameAs rdf:resource="http://pt.dbpedia.org/resource/Seamus_Heaney" />
+    <owl:sameAs rdf:resource="http://de.dbpedia.org/resource/Seamus_Heaney" />
+    <owl:sameAs rdf:resource="http://fr.dbpedia.org/resource/Seamus_Heaney" />
+    <owl:sameAs rdf:resource="http://ja.dbpedia.org/resource/シェイマス・ヒーニー" />
+    <owl:sameAs rdf:resource="http://ko.dbpedia.org/resource/셰이머스_히니" />
+    <owl:sameAs rdf:resource="http://ru.dbpedia.org/resource/Хини,_Шеймас" />
+    <owl:sameAs rdf:resource="http://sw.cyc.com/concept/Mx4rveYZ35wpEbGdrcN5Y29ycA" />
+    <owl:sameAs rdf:resource="http://es.dbpedia.org/resource/Seamus_Heaney" />
+    <owl:sameAs rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <owl:sameAs rdf:resource="http://cs.dbpedia.org/resource/Seamus_Heaney" />
+    <owl:sameAs rdf:resource="http://pl.dbpedia.org/resource/Seamus_Heaney" />
+    <owl:sameAs rdf:resource="http://rdf.freebase.com/ns/m.0dfrq" />
+    <rdfs:label xml:lang="de">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="ca">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="fi">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="en">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="nl">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="hu">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="fr">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="pl">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="ja">シェイマス・ヒーニー</rdfs:label>
+    <rdfs:label xml:lang="ko">셰이머스 히니</rdfs:label>
+    <rdfs:label xml:lang="uk">Шеймас Гіні</rdfs:label>
+    <rdfs:label xml:lang="vi">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="zh">谢默斯·希尼</rdfs:label>
+    <rdfs:label xml:lang="pt">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="no">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="es">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="it">Séamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="cs">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="sv">Seamus Heaney</rdfs:label>
+    <rdfs:label xml:lang="ru">Хини, Шеймас</rdfs:label>
+    <rdfs:comment xml:lang="vi">Seamus Jastin Heaney là một nhà thơ người Ireland, nhận Giải Nobel Văn học năm 1995.</rdfs:comment>
+    <rdfs:comment xml:lang="ca">Seamus Justin Heaney FRSL és un poeta, escriptor i professor universitari irlandès guardonat amb el Premi Nobel de Literatura l&#39;any 1995.</rdfs:comment>
+    <rdfs:comment xml:lang="cs">Seamus Justin Heaney je irský básník, spisovatel a překladatel z polštiny, nositel Nobelovy ceny za literaturu za rok 1995.</rdfs:comment>
+    <rdfs:comment xml:lang="ru">Ше́ймас Джа́стин Хи́ни — ирландский писатель, поэт, переводчик и преподаватель. Лауреат Нобелевской премии по литературе 1995 года «За лирическую красоту и этическую глубину поэзии, открывающую перед нами удивительные будни и оживающее прошлое».</rdfs:comment>
+    <rdfs:comment xml:lang="fr">Seamus Heaney est un poète irlandais, né le 13 avril 1939 dans le comté de Derry, Irlande du Nord. C&#39;est un des poètes anglophones les plus connus du XX siècle. Il est très apprécié dans le monde anglo-saxon pour une poésie mêlant l&#39;évocation sensuelle de la nature et du cadre celtique à la violence désespérée de la situation politique actuelle en Irlande du Nord. Il a reçu le prix Nobel de littérature en 1995.</rdfs:comment>
+    <rdfs:comment xml:lang="it">È il massimo rappresentante contemporaneo del rinascimento poetico irlandese, e uno dei più importanti poeti del mondo.</rdfs:comment>
+    <rdfs:comment xml:lang="ja">シェイマス・ヒーニー（Seamus Heaney, 1939年4月13日 - ）は北アイルランド出身の詩人・作家。</rdfs:comment>
+    <rdfs:comment xml:lang="de">Seamus Justin Heaney ist ein irischer Schriftsteller und seit 1995 Träger des Nobelpreises für Literatur.</rdfs:comment>
+    <rdfs:comment xml:lang="sv">Seamus Justin Heaney, född 13 april 1939 i Mossbawn Farm nära Castledawson, County Derry, är en irländsk författare, sedan 1989 professor i poetik vid universitetet i Oxford. Heany studerade vid Queen&#39;s University i Belfast där han senare själv undervisade. På 1960-talet var Heaney medlem av en grupp lovande diktare i Belfast. Heaney mottog Nobelpriset i litteratur år 1995.</rdfs:comment>
+    <rdfs:comment xml:lang="no">Seamus Justin Heaney er en irsk poet. Han ble tildelt nobelprisen i litteratur i 1995.</rdfs:comment>
+    <rdfs:comment xml:lang="ko">셰이머스 히니는 아일랜드의 시인, 작가 겸 교수로, 현재 더블린에 거주하고 있다. 그는 1939년에 북아일랜드의 농가에서 아홉 형제 가운데 장남으로 태어났으며 1995년에 노벨 문학상, 2006년에 T. S. 엘리엇 상을 수상했다. 그의 대표 작품으로 시집 《어느 자연주의자의 죽음 (Death of a Naturalist)》이 있다.</rdfs:comment>
+    <rdfs:comment xml:lang="fi">Seamus Heaney on irlantilainen runoilija. Hän on eräs tunnetuimmista nykyisin elävistä englanninkielisistä runoilijoista. Hänelle myönnettiin Nobelin kirjallisuuspalkinto 1995. Heaneyn työt kumpuavat Pohjois-Irlannissa vietetystä lapsuudesta ja Irlannin historiasta. Oman työnsä lisäksi hän on kääntänyt klassikoita nykyenglannille, muun muassa muinaisenglantilaisen eepoksen Beowulfin josta sai Whitbread-palkinnon.</rdfs:comment>
+    <rdfs:comment xml:lang="pt">Seamus Heaney é um poeta e escritor irlandês. Foi agraciado com o Nobel de Literatura de 1995.</rdfs:comment>
+    <rdfs:comment xml:lang="zh">谢默斯·希尼（英语：Seamus Heaney，1939年4月13日－）爱尔兰作家、诗人。1995年诺贝尔文学奖获得者。</rdfs:comment>
+    <rdfs:comment xml:lang="es">Seamus Heaney /ˈʃeɪməs ˈhiːni/ es un escritor y académico irlandés. En 1957 marchó a Belfast para estudiar literatura en la Queen’s University, donde impartió clases entre 1966 y 1972 antes de dedicarse por entero a la literatura. Heaney, católico irlandés, se vio muy afectado por la violencia entre católicos y protestantes en el Ulster, y decidió trasladarse a Dublín en 1972. En el Carysfort College de esta misma ciudad impartió clases entre 1975 y 1980.</rdfs:comment>
+    <rdfs:comment xml:lang="hu">Seamus Heaney ír költő, író, előadó. 1995-ben megkapta az irodalmi Nobel-díjat, 2006-ban pedig a T.S. Eliot-díjat. Jelenleg Dublinban él.</rdfs:comment>
+    <rdfs:comment xml:lang="en">Seamus Heaney is an Irish poet, playwright, translator, lecturer and recipient of the 1995 Nobel Prize in Literature. Born at Mossbawn farmhouse between Castledawson and Toomebridge, he now resides in Dublin. As well as the Nobel Prize in Literature, Heaney has received the Geoffrey Faber Memorial Prize (1968), the E. M. Forster Award (1975), the Golden Wreath of Poetry (2001), T. S. Eliot Prize (2006) and two Whitbread Prizes (1996 and 1999).</rdfs:comment>
+    <rdfs:comment xml:lang="nl">Seamus Justin Heaney is een Noord-Ierse dichter, toneelschrijver, vertaler en winnaar van de Nobelprijs voor de Literatuur. Hij woont in Dublin. Hij verloor beide ouders op jonge leeftijd en groeide bij zijn oom en tante op. In 1963 werd hij leraar Engels aan St. Joseph&#39;s College in Belfast. Onder leiding van Philip Hobsbaum (1932-) volgde hij hier een poëzieworkshop, waar hij begon met schrijven. Onder het pseudoniem Incertus publiceerde hij werk in de universiteitstijdschriften.</rdfs:comment>
+    <rdfs:comment xml:lang="uk">Шеймас Джастін Гіні, 13 квітня, 1939) — ірландський письменник, поет, перекладач та викладач. Лауреат Нобелівської премії з літератури 1995 рік «за твори ліричної краси й етичної глибини, що підносять щоденні дива та оживляють минуле».</rdfs:comment>
+    <rdfs:comment xml:lang="pl">Seamus Justin Heaney – poeta irlandzki, laureat nagrody Nobla w dziedzinie literatury. Oprócz poezji Heaney zajmuje się też krytyką literacką, dramatopisarstwem oraz tłumaczeniem: m. in. w 1999 wydał wierszowane tłumaczenie staroangielskiego poematu heroicznego Beowulf. Popularyzuje również literaturę, biorąc często udział w programach radiowych i telewizyjnych jej poświęconych (np. w produkcjach BBC).</rdfs:comment>
+    <dbpedia-owl:birthPlace rdf:resource="http://dbpedia.org/resource/Castledawson" />
+    <dbpedia-owl:birthPlace rdf:resource="http://dbpedia.org/resource/Northern_Ireland" />
+    <dbpedia-owl:birthPlace rdf:resource="http://dbpedia.org/resource/Belfast" />
+    <dbpedia-owl:birthPlace rdf:resource="http://dbpedia.org/resource/County_Londonderry" />
+    <dbpedia-owl:birthPlace rdf:resource="http://dbpedia.org/resource/Bellaghy" />
+    <dbpedia-owl:birthDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1939-04-13</dbpedia-owl:birthDate>
+    <foaf:givenName xml:lang="en">Seamus</foaf:givenName>
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.arionpress.com" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.griffinpoetryprize.com/awards-and-poets/shortlists/2011-shortlist/seamus-heaney/" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://aosdana.artscouncil.ie/Members/Literature/Heaney.aspx" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.poetryarchive.org/poetryarchive/singlePoet.do?poetId=1392" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.nobelprize.org/nobel_prizes/literature/laureates/1995/" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.npg.org.uk/collections/search/person/mp05395/seamus-justin-heaney" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.lannan.org/docs/seamus-heaney-031001-trans-read.pdf" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.poetryfoundation.org/bio/seamus-heaney" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.hup.harvard.edu/catalog/VENSEA.html" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.newyorker.com/online/blogs/festival/2008/10/history-and-hom.html" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.poets.org/poet.php/prmPID/211" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.qub.ac.uk/directorates/InformationServices/TheLibrary/FileStore/Filetoupload,153261,en.pdf" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.nobel.se/literature/laureates/1995/heaney-lecture.html" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.lannan.org/lf/rc/event/seamus-heaney/" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://poemsoutloud.net/audio/archive/heaney_reads_deor/" />
+    <dbpedia-owl:wikiPageExternalLink rdf:resource="http://www.bodleian.ox.ac.uk/__data/assets/file/0005/20696/archipelago__heaney.mp3" />
+    <foaf:depiction rdf:resource="http://upload.wikimedia.org/wikipedia/commons/c/ce/Seamus_Heaney.jpg" />
+    <foaf:name xml:lang="en">Seamus Heaney</foaf:name>
+    <dbpprop:birthPlace rdf:resource="http://dbpedia.org/resource/Northern_Ireland" />
+    <dbpprop:birthPlace rdf:resource="http://dbpedia.org/resource/Bellaghy" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Alumni_of_Queen&#39;s_University_Belfast" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Nobel_laureates_in_Literature" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Irish_Nobel_laureates" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Living_people" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Irish_translators" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Translators_from_Irish" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Aosd%C3%A1na_members" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Dramatists_and_playwrights_from_Northern_Ireland" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:1939_births" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Translators_from_Old_English" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Formalist_poets" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Poetry_by_Seamus_Heaney" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:David_Cohen_Prize_recipients" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Poets_from_Northern_Ireland" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Cholmondeley_Award_winners" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:People_educated_at_St_Columb&#39;s_College" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Translators_from_Polish" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:People_from_County_Londonderry" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Essayists_from_Northern_Ireland" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Irish_poets" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:People_of_the_Year_Awards_winners" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Fellows_of_Magdalen_College,_Oxford" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Harvard_University_faculty" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Fellows_of_the_Royal_Society_of_Literature" />
+    <dcterms:subject rdf:resource="http://dbpedia.org/resource/Category:Nobel_laureates_from_Northern_Ireland" />
+    <dbpprop:name xml:lang="en">Seamus Heaney</dbpprop:name>
+    <dbpprop:name xml:lang="en">Heaney, Seamus</dbpprop:name>
+    <dc:description xml:lang="en">Irish poet</dc:description>
+    <dbpprop:caption xml:lang="en">University College Dublin, 2009</dbpprop:caption>
+    <dbpprop:caption xml:lang="en">Heaney addresses the Law Society of</dbpprop:caption>
+    <dbpprop:dateOfBirth rdf:datatype="http://www.w3.org/2001/XMLSchema#int">13</dbpprop:dateOfBirth>
+    <dbpprop:bgcolor xml:lang="en">#FFFFF0</dbpprop:bgcolor>
+    <dbpedia-owl:abstract xml:lang="ja">シェイマス・ヒーニー（Seamus Heaney, 1939年4月13日 - ）は北アイルランド出身の詩人・作家。</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="pl">Seamus Justin Heaney – poeta irlandzki, laureat nagrody Nobla w dziedzinie literatury. Oprócz poezji Heaney zajmuje się też krytyką literacką, dramatopisarstwem oraz tłumaczeniem: m. in. w 1999 wydał wierszowane tłumaczenie staroangielskiego poematu heroicznego Beowulf. Popularyzuje również literaturę, biorąc często udział w programach radiowych i telewizyjnych jej poświęconych (np. w produkcjach BBC).</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="cs">Seamus Justin Heaney je irský básník, spisovatel a překladatel z polštiny, nositel Nobelovy ceny za literaturu za rok 1995.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="sv">Seamus Justin Heaney, född 13 april 1939 i Mossbawn Farm nära Castledawson, County Derry, är en irländsk författare, sedan 1989 professor i poetik vid universitetet i Oxford. Heany studerade vid Queen&#39;s University i Belfast där han senare själv undervisade. På 1960-talet var Heaney medlem av en grupp lovande diktare i Belfast. Heaney mottog Nobelpriset i litteratur år 1995.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="ru">Ше́ймас Джа́стин Хи́ни — ирландский писатель, поэт, переводчик и преподаватель. Лауреат Нобелевской премии по литературе 1995 года «За лирическую красоту и этическую глубину поэзии, открывающую перед нами удивительные будни и оживающее прошлое».</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="de">Seamus Justin Heaney ist ein irischer Schriftsteller und seit 1995 Träger des Nobelpreises für Literatur.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="fi">Seamus Heaney on irlantilainen runoilija. Hän on eräs tunnetuimmista nykyisin elävistä englanninkielisistä runoilijoista. Hänelle myönnettiin Nobelin kirjallisuuspalkinto 1995. Heaneyn työt kumpuavat Pohjois-Irlannissa vietetystä lapsuudesta ja Irlannin historiasta. Oman työnsä lisäksi hän on kääntänyt klassikoita nykyenglannille, muun muassa muinaisenglantilaisen eepoksen Beowulfin josta sai Whitbread-palkinnon.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="nl">Seamus Justin Heaney is een Noord-Ierse dichter, toneelschrijver, vertaler en winnaar van de Nobelprijs voor de Literatuur. Hij woont in Dublin. Hij verloor beide ouders op jonge leeftijd en groeide bij zijn oom en tante op. In 1963 werd hij leraar Engels aan St. Joseph&#39;s College in Belfast. Onder leiding van Philip Hobsbaum (1932-) volgde hij hier een poëzieworkshop, waar hij begon met schrijven. Onder het pseudoniem Incertus publiceerde hij werk in de universiteitstijdschriften. In 1966 verscheen zijn eerste werk, Death of a Naturalist, waarvoor hij de E.C. Gregory Award, de Cholmondeley Award (1976), de Somerset Maugham Award (1968) en de Geoffrey Faber Memorial Prize (1968) kreeg. Hierop volgden honderden publicaties. Zijn tweede werk, Door into the Dark (1969), werd door de Poetry Book Society tot keuze van het jaar verkozen. In 1995 kreeg Heaney de Nobelprijs voor de Literatuur.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="fr">Seamus Heaney est un poète irlandais, né le 13 avril 1939 dans le comté de Derry, Irlande du Nord. C&#39;est un des poètes anglophones les plus connus du XX siècle. Il est très apprécié dans le monde anglo-saxon pour une poésie mêlant l&#39;évocation sensuelle de la nature et du cadre celtique à la violence désespérée de la situation politique actuelle en Irlande du Nord. Il a reçu le prix Nobel de littérature en 1995.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="en">Seamus Heaney is an Irish poet, playwright, translator, lecturer and recipient of the 1995 Nobel Prize in Literature. Born at Mossbawn farmhouse between Castledawson and Toomebridge, he now resides in Dublin. As well as the Nobel Prize in Literature, Heaney has received the Geoffrey Faber Memorial Prize (1968), the E. M. Forster Award (1975), the Golden Wreath of Poetry (2001), T. S. Eliot Prize (2006) and two Whitbread Prizes (1996 and 1999). He has been a member of Aosdána since its foundation and has been Saoi since 1997. He was both the Harvard and the Oxford Professor of Poetry and was made a Commandeur de l&#39;Ordre des Arts et Lettres in 1996. Heaney&#39;s personal papers are held by the National Library of Ireland. Robert Lowell called him &quot;the most important Irish poet since Yeats&quot; and many others, including the academic John Sutherland, have echoed the sentiment that he is &quot;the greatest poet of our age&quot;.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="es">Seamus Heaney /ˈʃeɪməs ˈhiːni/ es un escritor y académico irlandés. En 1957 marchó a Belfast para estudiar literatura en la Queen’s University, donde impartió clases entre 1966 y 1972 antes de dedicarse por entero a la literatura. Heaney, católico irlandés, se vio muy afectado por la violencia entre católicos y protestantes en el Ulster, y decidió trasladarse a Dublín en 1972. En el Carysfort College de esta misma ciudad impartió clases entre 1975 y 1980. Obtuvo una cátedra en la Universidad Harvard, Massachusetts, en 1984, y entre 1989 y 1994 fue catedrático de Poesía en la Universidad de Oxford, Inglaterra.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="it">È il massimo rappresentante contemporaneo del rinascimento poetico irlandese, e uno dei più importanti poeti del mondo.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="pt">Seamus Heaney é um poeta e escritor irlandês. Foi agraciado com o Nobel de Literatura de 1995.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="zh">谢默斯·希尼（英语：Seamus Heaney，1939年4月13日－）爱尔兰作家、诗人。1995年诺贝尔文学奖获得者。</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="uk">Шеймас Джастін Гіні, 13 квітня, 1939) — ірландський письменник, поет, перекладач та викладач. Лауреат Нобелівської премії з літератури 1995 рік «за твори ліричної краси й етичної глибини, що підносять щоденні дива та оживляють минуле».</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="hu">Seamus Heaney ír költő, író, előadó. 1995-ben megkapta az irodalmi Nobel-díjat, 2006-ban pedig a T.S. Eliot-díjat. Jelenleg Dublinban él.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="ca">Seamus Justin Heaney FRSL és un poeta, escriptor i professor universitari irlandès guardonat amb el Premi Nobel de Literatura l&#39;any 1995.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="ko">셰이머스 히니는 아일랜드의 시인, 작가 겸 교수로, 현재 더블린에 거주하고 있다. 그는 1939년에 북아일랜드의 농가에서 아홉 형제 가운데 장남으로 태어났으며 1995년에 노벨 문학상, 2006년에 T. S. 엘리엇 상을 수상했다. 그의 대표 작품으로 시집 《어느 자연주의자의 죽음 (Death of a Naturalist)》이 있다.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="vi">Seamus Jastin Heaney là một nhà thơ người Ireland, nhận Giải Nobel Văn học năm 1995.</dbpedia-owl:abstract>
+    <dbpedia-owl:abstract xml:lang="no">Seamus Justin Heaney er en irsk poet. Han ble tildelt nobelprisen i litteratur i 1995.</dbpedia-owl:abstract>
+    <dbpedia-owl:individualisedPnd xml:lang="de">118547410</dbpedia-owl:individualisedPnd>
+    <dbpprop:shortDescription xml:lang="en">Irish poet</dbpprop:shortDescription>
+    <dbpprop:placeOfBirth xml:lang="en">Castledawson, County Londonderry, thirty miles north-west of Belfast</dbpprop:placeOfBirth>
+    <dbpprop:period rdf:datatype="http://www.w3.org/2001/XMLSchema#int">1966</dbpprop:period>
+    <dbpprop:source xml:lang="en">from &quot;Digging&quot;, Death of a Naturalist</dbpprop:source>
+    <dbpprop:source xml:lang="en">from &quot;Mid-term break&quot;, Death of a Naturalist</dbpprop:source>
+    <dbpprop:portal xml:lang="en">Ireland</dbpprop:portal>
+    <dbpprop:portal xml:lang="en">Poetry</dbpprop:portal>
+    <dbpprop:portal xml:lang="en">Writing</dbpprop:portal>
+    <dbpprop:portal xml:lang="en">Northern Ireland</dbpprop:portal>
+    <dbpprop:portal xml:lang="en">Mythology</dbpprop:portal>
+    <dbpprop:portal xml:lang="en">Literature</dbpprop:portal>
+    <dbpprop:selibr rdf:datatype="http://www.w3.org/2001/XMLSchema#int">208744</dbpprop:selibr>
+    <dbpprop:wikiPageUsesTemplate rdf:resource="http://dbpedia.org/resource/Template:Infobox_writer" />
+    <dbpprop:wikiPageUsesTemplate rdf:resource="http://dbpedia.org/resource/Template:Subject_bar" />
+    <dbpprop:wikiPageUsesTemplate rdf:resource="http://dbpedia.org/resource/Template:Persondata" />
+    <dbpprop:wikiPageUsesTemplate rdf:resource="http://dbpedia.org/resource/Template:Authority_control" />
+    <dbpprop:wikiPageUsesTemplate rdf:resource="http://dbpedia.org/resource/Template:Quote_box" />
+    <dbpprop:wikiPageUsesTemplate rdf:resource="http://dbpedia.org/resource/Template:Navboxes" />
+    <dbpprop:pnd rdf:datatype="http://www.w3.org/2001/XMLSchema#int">118547410</dbpprop:pnd>
+    <dbpprop:lccn xml:lang="en">n/79/99140</dbpprop:lccn>
+    <dbpprop:viaf rdf:datatype="http://www.w3.org/2001/XMLSchema#int">109557338</dbpprop:viaf>
+    <dbpprop:nationality rdf:resource="http://dbpedia.org/resource/Irish_people" />
+    <dbpedia-owl:thumbnail rdf:resource="http://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Seamus_Heaney.jpg/200px-Seamus_Heaney.jpg" />
+    <dbpprop:salign xml:lang="en">right</dbpprop:salign>
+    <dbpprop:quoted xml:lang="en">true</dbpprop:quoted>
+    <dbpprop:birthDate rdf:datatype="http://www.w3.org/2001/XMLSchema#date">1939-04-13</dbpprop:birthDate>
+    <dbpprop:influences xml:lang="en">Dante Alighieri, Lord Byron, Geoffrey Chaucer, T. S. Eliot, Robert Frost, Gerard Manley Hopkins, Ted Hughes, Patrick Kavanagh, John Keats, Michael MacLaverty, Derek Mahon, Wilfred Owen, Samuel Palmer, Rainer Maria Rilke, William Shakespeare, J.M. Synge, Virgil, William Wordsworth, W. B. Yeats</dbpprop:influences>
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Medbh_McGuckian" />
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Edna_O&#39;Brien" />
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Owen_Sheers" />
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Giannina_Braschi" />
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Eavan_Boland" />
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Paul_Muldoon" />
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Dennis_Nurkse" />
+    <dbpprop:title xml:lang="en">Awards received by Seamus Heaney</dbpprop:title>
+    <dbpprop:alternativeNames xml:lang="en">Heaney, Seamus Justin</dbpprop:alternativeNames>
+    <dbpprop:width rdf:datatype="http://www.w3.org/2001/XMLSchema#int">300</dbpprop:width>
+    <dbpprop:width rdf:datatype="http://www.w3.org/2001/XMLSchema#int">350</dbpprop:width>
+    <dbpprop:align xml:lang="en">right</dbpprop:align>
+    <dbpprop:occupation xml:lang="en">Poet, playwright, translator</dbpprop:occupation>
+    <dbpprop:imagesize rdf:datatype="http://www.w3.org/2001/XMLSchema#int">250</dbpprop:imagesize>
+    <dbpprop:quote xml:lang="en">From  &quot;Digging&quot; 
+
+My grandfather cut more turf in a day
+Than any other man on Toner&#39;s bog.
+Once I carried him milk in a bottle
+Corked sloppily with paper. He straightened up
+To drink it, then fell to right away
+
+Nicking and slicing neatly, heaving sods
+Over his shoulder, going down and down
+For the good turf. Digging.
+
+The cold smell of potato mould, the squelch and slap
+Of soggy peat, the curt cuts of an edge
+Through living roots awaken in my head.
+But I&#39;ve no spade to follow men like them.
+
+Between my finger and my thumb
+The squat pen rests.
+I&#39;ll dig with it.</dbpprop:quote>
+    <dbpprop:quote xml:lang="en">From Mid-Term Break
+
+Wearing a poppy bruise on the left temple,
+He lay in the four foot box as in a cot.
+No gaudy scars, the bumper knocked him clear.
+
+A four foot box, a foot for every year.</dbpprop:quote>
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Ted_Hughes" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Rainer_Maria_Rilke" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/William_Wordsworth" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/William_Shakespeare" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/John_Millington_Synge" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Gerard_Manley_Hopkins" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Lord_Byron" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Virgil" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Michael_MacLaverty" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Derek_Mahon" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Patrick_Kavanagh" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/W._B._Yeats" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Dante_Alighieri" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Robert_Frost" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Wilfred_Owen" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Samuel_Palmer" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/T._S._Eliot" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/John_Keats" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Geoffrey_Chaucer" />
+    <dbpedia-owl:nationality rdf:resource="http://dbpedia.org/resource/Irish_people" />
+    <dbpedia-owl:activeYearsStartYear rdf:datatype="http://www.w3.org/2001/XMLSchema#gYear">1966-01-01T00:00:00+02:00</dbpedia-owl:activeYearsStartYear>
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Edna_O&#39;Brien" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Owen_Sheers" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Dennis_Nurkse" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Giannina_Braschi" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Eavan_Boland" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Paul_Muldoon" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Medbh_McGuckian" />
+    <ns8:wasDerivedFrom rdf:resource="http://en.wikipedia.org/wiki/Seamus_Heaney?oldid=493710038" />
+    <foaf:surname xml:lang="en">Heaney</foaf:surname>
+    <dbpprop:hasPhotoCollection rdf:resource="http://www4.wiwiss.fu-berlin.de/flickrwrappr/photos/Seamus_Heaney" />
+    <foaf:isPrimaryTopicOf rdf:resource="http://en.wikipedia.org/wiki/Seamus_Heaney" />
+    <dbpprop:wordnet_type rdf:resource="http://www.w3.org/2006/03/wn/wn20/instances/synset-writer-noun-1" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Ted_Hughes">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Eavan_Boland">
+    <dbpprop:influences rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Death_of_a_Naturalist">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Sweeney_Astray">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Nick_Laird">
+    <dbpprop:influences rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influencedBy rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/New_Selected_Poems_1966%E2%80%931987">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/John_Millington_Synge">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/List_of_Nobel_laureates_by_university_affiliation">
+    <dbpprop:t rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/District_and_Circle">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/T._S._Eliot">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Derek_Mahon">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Herbert_McCabe">
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/The_Burial_at_Thebes">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Stations_(Heaney)">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Virgil">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Robert_Frost">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Brian_Friel">
+    <dbpprop:collaborator rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/John_Montague_(poet)">
+    <dbpprop:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:influenced rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Heaney">
+    <dbpedia-owl:wikiPageDisambiguates rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Electric_Light_(poetry)">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Seamus_Heaney_Collected_Poems">
+    <dbpprop:artist rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:artist rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Selected_Poems_1965-1975">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/The_Poet_&amp;_The_Piper">
+    <dbpprop:artist rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:artist rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Human_Chain_(poetry)">
+    <dbpprop:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+    <dbpedia-owl:author rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Poetry_Now_Award">
+    <dbpprop:holder rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/S%C3%A9amus_Heaney">
+    <dbpedia-owl:wikiPageRedirects rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Seamus_Haney">
+    <dbpedia-owl:wikiPageRedirects rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Electric_Light_(Heaney)">
+    <dbpedia-owl:wikiPageRedirects rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Seamus_Justin_Heaney">
+    <dbpedia-owl:wikiPageRedirects rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://dbpedia.org/resource/Famous_Seamus">
+    <dbpedia-owl:wikiPageRedirects rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://en.wikipedia.org/wiki/Seamus_Heaney">
+    <foaf:primaryTopic rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://data.nytimes.com/52756563738094177893">
+    <owl:sameAs rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+  <rdf:Description rdf:about="http://mpii.de/yago/resource/Seamus_Heaney">
+    <owl:sameAs rdf:resource="http://dbpedia.org/resource/Seamus_Heaney" />
+  </rdf:Description>
+</rdf:RDF>

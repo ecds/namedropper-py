@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # file namedropper-py/test/test_spotlight.py
 #
 #   Copyright 2012 Emory University Library
@@ -16,11 +14,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import os.path
+import rdflib
+
 import unittest
 from mock import patch, Mock
 
-from namedropper.spotlight import SpotlightClient
-
+from namedropper.spotlight import SpotlightClient, DBpediaResource
 
 @patch('namedropper.spotlight.requests')
 class SpotlightClientTest(unittest.TestCase):
@@ -95,3 +95,55 @@ class SpotlightClientTest(unittest.TestCase):
         # TODO: test larger text / post
 
         # TODO: simulate error
+
+
+class DBpediaResourceTest(unittest.TestCase):
+    URI = {
+        'heaney': 'http://dbpedia.org/resource/Seamus_Heaney',
+        'belfast': 'http://dbpedia.org/resource/Belfast'
+    }
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    FIXTURES = {
+        'heaney': os.path.join(BASE_DIR, 'fixtures', 'Seamus_Heaney.rdf'),
+        'belfast': os.path.join(BASE_DIR, 'fixtures', 'belfast.rdf'),
+    }
+
+    def test_init(self):
+        res = DBpediaResource(self.URI['heaney'])
+        self.assertEqual(self.URI['heaney'], res.uri)
+        self.assertEqual(rdflib.URIRef(self.URI['heaney']), res.uriref)
+        self.assertEqual('Seamus_Heaney', res.id)
+        self.assertEqual('en', res.language)
+
+        res = DBpediaResource(self.URI['heaney'], 'ja')
+        self.assertEqual('ja', res.language)
+
+    def test_rdf_properties(self):
+        g = rdflib.graph.Graph()
+        g.load(self.FIXTURES['heaney'])
+
+        # patch in local fixture to avoid hitting dbpedia
+        with patch.object(DBpediaResource, 'graph', new=g):
+            sh = DBpediaResource(self.URI['heaney'])
+            self.assertEqual('Seamus Heaney', sh.label)
+            self.assertEqual(109557338, sh.viafid)
+            self.assertEqual(None, sh.latitude)
+            self.assertEqual(None, sh.longitude)
+            self.assertEqual(True, sh.is_person)
+
+            sh = DBpediaResource(self.URI['heaney'], 'ja')
+            self.assertNotEqual('Seamus Heaney', sh.label)
+
+        g.load(self.FIXTURES['belfast'])
+        with patch.object(DBpediaResource, 'graph', new=g):
+            sh = DBpediaResource(self.URI['belfast'])
+            self.assertEqual('Belfast', sh.label)
+            self.assertEqual(None, sh.viafid)
+            self.assertAlmostEqual(54.596, sh.latitude, places=2)
+            self.assertAlmostEqual(-5.930, sh.longitude, places=2)
+            self.assertEqual(False, sh.is_person)
+
+
+
+
