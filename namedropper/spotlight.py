@@ -20,7 +20,6 @@ from datetime import datetime, timedelta
 import logging
 import rdflib
 import requests
-import sys
 
 logger = logging.getLogger(__name__)
 
@@ -196,6 +195,9 @@ class DBpediaResource(object):
        like label; defaults to 'en'
     '''
 
+    # TODO: possibly add a mechanism to init from an annotation
+    # result (pre-populate any values available from api result)
+
     def __init__(self, uri, language='en'):
         self.uri = uri
         self.uriref = rdflib.URIRef(uri)
@@ -249,5 +251,38 @@ class DBpediaResource(object):
     @cached_property
     def is_person(self):
         'boolean flag to indicate if this resource represents a person'
-        return any(((self.uriref, rdflib.RDF.type, pt) in self.graph
-                for pt in self.person_types))
+        return any(((self.uriref, rdflib.RDF.type, t) in self.graph
+                for t in self.person_types))
+
+    # RDF org types
+    org_types = [DBPEDIA_OWL.Organisation]
+
+    @cached_property
+    def is_org(self):
+        '''boolean flag to indicate if this resource represents an
+        organization or corporate group'''
+        return any(((self.uriref, rdflib.RDF.type, t) in self.graph
+                for t in self.org_types))
+
+    # RDF place types
+    place_types = [DBPEDIA_OWL.Place]
+
+    @cached_property
+    def is_place(self):
+        'boolean flag to indicate if this resource represents a place'
+        return any(((self.uriref, rdflib.RDF.type, t) in self.graph
+                for t in self.place_types))
+
+    @property
+    def type(self):
+        '''high-level type of resource; currently only supports person,
+        place, and organization.'''
+        if self.is_person:
+            return 'Person'
+        if self.is_place:
+            return 'Place'
+        if self.is_org:
+            return 'Organization'
+        else:
+            return ''
+

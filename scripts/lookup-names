@@ -90,7 +90,7 @@ class LookupNames(scripts.ScriptBase):
             # done here because in certain modes it will call
             # populate_csv_from_results more than once
             self.csv_writer.writerow(["Name", "URI", "Similarity Score",
-               "Support Score", "Context"])
+               "Support Score", "Type", "Context"])
 
         spotlight_args = {'base_url': self.args.dbpedia_url,
             'confidence': self.args.confidence, 'support': self.args.support,
@@ -213,11 +213,23 @@ class LookupNames(scripts.ScriptBase):
             # normalizing whitespace for plain-text input
             context = util.normalize_whitespace(results['text'][sub_start:sub_end])
 
+            # NOTE: it would be nice to use the DBpediaResource class
+            # here, but as currently written that would require
+            # additional http requests instead of using the annotation result
+            rsrc_type = ''
+            if util.is_person(result):
+                rsrc_type = 'person'
+            elif util.is_org(result):
+                rsrc_type = 'organization'
+            elif util.is_place(result):
+                rsrc_type = 'place'
+
             self.csv_writer.writerow([
                     result['surfaceForm'],
                     result['URI'],
                     result['similarityScore'],
                     result['support'],
+                    rsrc_type,
                     context
                 ])
 
