@@ -2,6 +2,7 @@
 
 import argparse
 from eulxml.xmlmap.teimap import TEI_NAMESPACE
+import os
 from requests.exceptions import HTTPError
 import sys
 import unicodecsv
@@ -24,6 +25,9 @@ class LookupNames(scripts.ScriptBase):
     # number of characters on either side of an entity in the
     # text to include in the context of the csv_file
     __context_pad = 100
+
+    total = 0
+    # total number of resources identified
 
     def init_parser(self):
         parser = super(LookupNames, self).init_parser()
@@ -74,7 +78,6 @@ class LookupNames(scripts.ScriptBase):
 
         self.csv_writer = None
         if self.args.csv_file:
-            #init self.csv_writer
             self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'),
                 encoding="utf-8")
 
@@ -159,10 +162,21 @@ class LookupNames(scripts.ScriptBase):
             's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
 
+        if self.args.csv_file and self.total == 0:
+            # close csv writer and remove the created file (headers only)
+            del(self.csv_writer)
+            os.remove(self.args.csv_file)
+            print >> sys.stderr, 'CSV file (%s) not created ' % self.args.csv_file \
+                + 'because no resources were identified'
+
         # if output file was specified, write out the result
         if self.args.output_file:
-            with open(self.args.output_file, 'w') as outfile:
-                xmlobj.serializeDocument(stream=outfile, pretty=True)
+            if self.total != 0:
+                with open(self.args.output_file, 'w') as outfile:
+                    xmlobj.serializeDocument(stream=outfile, pretty=True)
+            else:
+                print >> sys.stderr, 'Updated XML file (%s) ' % self.args.output_file \
+                    + 'not created because no resources were identified'
 
     def get_names(self, text):
         # run spotlight annotation on a text string and print out identified
@@ -211,6 +225,7 @@ class LookupNames(scripts.ScriptBase):
         # run spotlight annotation on a text string and print out identified
         # resources
         results = self.get_names(text)
+        self.total += len(results)
 
         if not results:
             print 'No resources identified'
