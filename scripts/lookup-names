@@ -4,6 +4,7 @@ import argparse
 from eulxml.xmlmap.teimap import TEI_NAMESPACE
 import os
 from requests.exceptions import HTTPError
+import signal
 import sys
 import unicodecsv
 
@@ -28,6 +29,9 @@ class LookupNames(scripts.ScriptBase):
 
     total = 0
     # total number of resources identified
+
+    # interrupt flag to exit the main processing loop when a signal is caught
+    interrupted = False
 
     def init_parser(self):
         parser = super(LookupNames, self).init_parser()
@@ -70,6 +74,10 @@ class LookupNames(scripts.ScriptBase):
         return parser
 
     def run(self):
+        # bind a handler for interrupt signal
+        signal.signal(signal.SIGINT, self.interrupt_handler)
+
+
         # input type auto-detection handled in base class
         if self.args.input == 'tei' and not self.args.tei_xpath:
             print 'Error! --tei-xpath is required when input document is TEI\n'
@@ -112,6 +120,8 @@ class LookupNames(scripts.ScriptBase):
                 self.unique_names(text)
             else:
                 self.list_names(text)
+            # not checking interrupt flag here because not looping
+            # and making multiple annotate requests
 
         # TEI or EAD
         else:
@@ -124,6 +134,10 @@ class LookupNames(scripts.ScriptBase):
                 names = set()
                 for label, text_list in self.get_xml_sections(xmlobj):
                     for txt in text_list:
+                        # if interrupt flag is set, bail out
+                        if self.interrupted:
+                            break
+
                         if txt in self._queried_text:
                                 continue
                         names.update(set([(r['surfaceForm'], r['URI']) for r in self.get_names(txt)]))
@@ -136,8 +150,11 @@ class LookupNames(scripts.ScriptBase):
                 print 'Looking up names by section'
                 for label, node_list in self.get_xml_sections(xmlobj):
                     print "\n%s" % label
-                    #for txt in text_list:
                     for node in node_list:
+                        # if interrupt flag is set, bail out
+                        if self.interrupted:
+                            break
+
                         txt = node.xpath('normalize-space(.)')
                         # for EAD only, skip look-ups on exactly repeated text
                         # (e.g. "undated correspondence" or "miscellaneous invitations")
@@ -170,7 +187,8 @@ class LookupNames(scripts.ScriptBase):
                 + 'because no resources were identified'
 
         # if output file was specified, write out the result
-        if self.args.output_file:
+        # - don't generate output if exiting via interrupt
+        if self.args.output_file and not self.interrupted:
             if self.total != 0:
                 with open(self.args.output_file, 'w') as outfile:
                     xmlobj.serializeDocument(stream=outfile, pretty=True)
@@ -333,6 +351,20 @@ class LookupNames(scripts.ScriptBase):
 
     _viafids = {}
     _dbpedia_viaf_lookups = []
+
+    def interrupt_handler(self, signum, frame):
+        '''Gracefully handle a SIGINT, if possible. Sets a flag so main script
+        loop can exit cleanly, and restores the default SIGINT behavior,
+        so that a second interrupt will stop the script.
+        '''
+        if signum == signal.SIGINT:
+            # restore default signal handler so a second SIGINT can be used to quit
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            # set interrupt flag so main loop knows to quit at a reasonable time
+            self.interrupted = True
+            # report if script is in the middle of an object
+            print >> sys.stderr, '\nScript will exit after processing the current request.'
+            print >> sys.stderr, '(Ctrl-C / Interrupt again to quit immediately)\n'
 
 
 if __name__ == '__main__':
