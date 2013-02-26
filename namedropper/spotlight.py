@@ -236,6 +236,11 @@ class DBpediaResource(object):
         return self._graph_value(DBPPROP.viaf)
 
     @cached_property
+    def thumbnail(self):
+        '''thumbnail image for this resource'''
+        return self._graph_value(DBPEDIA_OWL.thumbnail)
+
+    @cached_property
     def latitude(self):
         'latitude (for places)'
         return self._graph_value(GEO.lat)
