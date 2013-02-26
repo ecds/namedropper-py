@@ -306,6 +306,13 @@ def annotate_xml(node, result, mode='tei'):
                         attributes = {'source': 'viaf', 'authfilenumber': viafid}
                     else:
                         logger.info('VIAF id not found for %s' % item['surfaceForm'])
+                if ead_tag == 'geogname':
+                    dbres = spotlight.DBpediaResource(item['URI'])
+                    if dbres.geonames_id is not None:
+                        attributes = {'source': 'geonames',
+                            'authfilenumber': dbres.geonames_id}
+                    else:
+                        logger.info('GeoNames.org id not found for %s' % item['surfaceForm'])
 
                 # for now, use dbpedia identifiers where no author id is available
                 if not attributes:

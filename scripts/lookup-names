@@ -40,6 +40,8 @@ class LookupNames(scripts.ScriptBase):
             help='only list unique names found anywhere in the content')
         parser.add_argument('--viaf', action='store_true', dest='viaf_lookup', default=False,
             help='look up VIAF identifiers for recognized Person entities')
+        parser.add_argument('--geonames', action='store_true', dest='geonames_lookup', default=False,
+            help='look up GeoNames identifiers for recognized Place entities')
 
         parser.add_argument('--output', '-o', dest='output_file',
             help='''Generate an updated XML file with recognized names as the
@@ -264,10 +266,15 @@ class LookupNames(scripts.ScriptBase):
             for resource in results:
                 self.print_name(resource['surfaceForm'], resource['URI'],
                     resource['similarityScore'], resource['support'])
-                if self.args.viaf_lookup:
+                dbres = spotlight.DBpediaResource(resource['URI'])
+                if self.args.viaf_lookup and dbres.is_person:
                     viafid = util.get_viafid(resource)
                     if viafid:
                         print '  %s' % viafid
+
+                if self.args.geonames_lookup and dbres.is_place:
+                    if dbres.geonames_uri:
+                        print '  %s' % dbres.geonames_uri
 
         # NOTE: dbpedia annotate result is per offset within the text, so
         # may include duplicates - e.g., different "surfaceForm" text variants

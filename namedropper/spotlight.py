@@ -236,6 +236,23 @@ class DBpediaResource(object):
         return self._graph_value(DBPPROP.viaf)
 
     @cached_property
+    def geonames_uri(self):
+        '''GeoNames URI for this resource (generally only available
+            for places, and not available for all places)'''
+        objects = self.graph.objects(subject=self.uriref, predicate=rdflib.OWL.sameAs)
+        for obj in objects:
+            if 'geonames.org' in unicode(obj):
+                return unicode(obj)
+
+    @cached_property
+    def geonames_id(self):
+        '''GeoNames numeric id for this resource (based on :prop:`geonames_uri`)'''
+        if self.geonames_uri is not None:
+            # strip off trailing slash, then split by slash and
+            # return the last portion of the uri
+            return self.geonames_uri.rstrip('/').rsplit('/', 1)[-1]
+
+    @cached_property
     def thumbnail(self):
         '''thumbnail image for this resource'''
         return self._graph_value(DBPEDIA_OWL.thumbnail)
