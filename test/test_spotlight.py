@@ -18,9 +18,10 @@ import os.path
 import rdflib
 
 import unittest
-from mock import patch, Mock
+from mock import patch
 
 from namedropper.spotlight import SpotlightClient, DBpediaResource
+
 
 @patch('namedropper.spotlight.requests')
 class SpotlightClientTest(unittest.TestCase):
@@ -135,6 +136,10 @@ class DBpediaResourceTest(unittest.TestCase):
             sh = DBpediaResource(self.URI['heaney'], 'ja')
             self.assertNotEqual('Seamus Heaney', sh.label)
 
+            # non-place should not error but return none for geonames
+            self.assertEqual(None, sh.geonames_uri)
+            self.assertEqual(None, sh.geonames_id)
+
         g.load(self.FIXTURES['belfast'])
         with patch.object(DBpediaResource, 'graph', new=g):
             sh = DBpediaResource(self.URI['belfast'])
@@ -144,6 +149,7 @@ class DBpediaResourceTest(unittest.TestCase):
             self.assertAlmostEqual(-5.930, sh.longitude, places=2)
             self.assertEqual(False, sh.is_person)
 
-
-
+            self.assertEqual('http://sws.geonames.org/3333223/',
+                sh.geonames_uri)
+            self.assertEqual('3333223', sh.geonames_id)
 

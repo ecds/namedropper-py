@@ -16,6 +16,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from copy import deepcopy
 import unittest
 import os
 from eulxml.xmlmap import load_xmlobject_from_file
@@ -268,9 +269,14 @@ class AnnotateXmlTest(unittest.TestCase):
             'inserted count should match number of identified resources minus count of existing tagged names')
 
     @patch('namedropper.util.get_viafid')       # patch to ensure we don't hit VIAF in unit tests
-    def test_ead(self, mock_viafid):
+    @patch('namedropper.util.spotlight')
+    def test_ead(self, mock_spotlight, mock_viafid):
+        # set mock dbpedia resource to have no geonames id
+        mock_rsrc = mock_spotlight.DBpediaResource.return_value
+        mock_rsrc.geonames_id = None
+
         # first paragraph in biographical note
-        paragraph = self.ead.archdesc.biography_history.content[0].node
+        paragraph = deepcopy(self.ead.archdesc.biography_history.content[0].node)
         annotations = hobsbaum_annotations.bioghist_result
         text_content = paragraph.xpath('normalize-space(.)')
         inserted = annotate_xml(paragraph, annotations, mode='ead')
@@ -279,17 +285,24 @@ class AnnotateXmlTest(unittest.TestCase):
         names = paragraph.xpath('.//e:persname|.//e:corpname|.//e:geogname', **self.ead_ns)
         expected = len(annotations['Resources'])
         self.assertEqual(expected, inserted,
-            'resources identified in spotlight result should match reported inserted count (expected %d, got %d)' \
+            'resources identified in spotlight result should match ' + \
+            'reported inserted count (expected %d, got %d)' \
             % (expected, inserted))
         got = len(names)
         self.assertEqual(expected, got,
-            'resources identified in dbpedia spotlight result should be tagged in the xml (expected %d, got %d)' \
+            'resources identified in dbpedia spotlight result should ' + \
+            'be tagged in the xml (expected %d, got %d)' \
             % (expected, got))
+
+        geognames = paragraph.xpath('.//e:geogname', **self.ead_ns)
+        # geogname source should NOT be geonames since no geonames id was available
+        self.assertNotEqual('geonames', geognames[0].get('source'))
 
         # normalized text should be the same before and after
         self.assertEqual(text_content, paragraph.xpath('normalize-space(.)'))
 
-        # tag name should match resource type; text value should match equivalent dbpedia result
+        # tag name should match resource type;
+        # text value should match equivalent dbpedia result
         # TODO: viaf id? dbpedia uri
         for i in range(inserted):
             result = annotations['Resources'][i]
@@ -304,3 +317,13 @@ class AnnotateXmlTest(unittest.TestCase):
             self.assertEqual(result['surfaceForm'], names[i].text)
             # TODO: test viaf id lookup ? (at least for persons)
             #self.assertEqual(result['URI'], names[i].get('ref'))
+
+        # set mock dbpedia resource to return a geonames id
+        mock_rsrc.geonames_id = '3356234'
+        # re-annotate
+        paragraph = deepcopy(self.ead.archdesc.biography_history.content[0].node)
+        inserted = annotate_xml(paragraph, annotations, mode='ead')
+        names = paragraph.xpath('.//e:geogname', **self.ead_ns)
+        # source/auth# should be set from dbpedia geoname identifier
+        self.assertEqual('geonames', names[0].get('source'))
+        self.assertEqual(mock_rsrc.geonames_id, names[0].get('authfilenumber'))
