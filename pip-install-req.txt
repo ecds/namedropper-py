@@ -6,3 +6,4 @@ rdflib
 SPARQLWrapper
 feedparser
 unicodecsv
+python-dateutil
