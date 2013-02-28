@@ -207,7 +207,7 @@ class DBpediaResource(object):
     @cached_property
     def graph(self):
         # TODO: use requests/http proxy ?
-        g = rdflib.graph.Graph()
+        g = rdflib.graph.ConjunctiveGraph()
         # NOTE: might be interesting to log how long this takes
         logger.info('Loading RDF data for %s' % self.uri)
         g.load(self.uri)   # NOTE: not documented; actually calls parse
@@ -220,6 +220,13 @@ class DBpediaResource(object):
             lang=self.language)
         if results:
             return unicode(results[0][1])
+
+    @cached_property
+    def description(self):
+        '''brief description of this resource in the current language'''
+        for ab in self.graph.objects(self.uriref, rdflib.RDFS.comment):
+            if ab.language == self.language:
+                return ab
 
     def _graph_value(self, pred):
         # convenience method to get the value for a predicate

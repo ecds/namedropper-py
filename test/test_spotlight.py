@@ -1,4 +1,5 @@
 # file namedropper-py/test/test_spotlight.py
+# coding=utf-8
 #
 #   Copyright 2012 Emory University Library
 #
@@ -132,9 +133,17 @@ class DBpediaResourceTest(unittest.TestCase):
             self.assertEqual(None, sh.latitude)
             self.assertEqual(None, sh.longitude)
             self.assertEqual(True, sh.is_person)
+            # beginning of english rdfs:comment
+            en_desc = 'Seamus Heaney is an Irish poet, playwright, translator,'
+            self.assert_(sh.description.startswith(en_desc))
 
             sh = DBpediaResource(self.URI['heaney'], 'ja')
             self.assertNotEqual('Seamus Heaney', sh.label)
+
+            # beginning of french rdfs:comment
+            fr_desc = u'Seamus Heaney est un poète irlandais'
+            sh = DBpediaResource(self.URI['heaney'], 'fr')
+            self.assert_(sh.description.startswith(fr_desc))
 
             # non-place should not error but return none for geonames
             self.assertEqual(None, sh.geonames_uri)
