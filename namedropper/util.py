@@ -155,6 +155,12 @@ def is_place(item):
     return 'DBpedia:Place' in item_types
 
 
+def enable_oxygen_track_changes(node):
+    oxy_track_changes = ProcessingInstruction('oxy_options',
+        'track_changes="on"')
+    node.append(oxy_track_changes)
+
+
 def annotate_xml(node, result, mode='tei', track_changes=False):
     '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
     that dbpedia annotate was called on the **normalized** text from this node.
@@ -178,6 +184,11 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
 
     :returns: total count of the number of entities inserted into the xml
     '''
+
+    # TODO: document oxygen track changes stuff
+    # - what tags get added where
+    # - probably want to run enable_oxygen_track_changes once at
+    # document level...
 
     # TEI tags will all use name
     if mode == 'tei':
@@ -209,9 +220,9 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
     if track_changes:
         # insert a processing instruction so that Oxygen knows
         # track changes mode should be enabled for this document
-        oxy_track_changes = ProcessingInstruction('oxy_options',
-            'track_changes="on"')
-        node.append(oxy_track_changes)
+        # oxy_track_changes = ProcessingInstruction('oxy_options',
+        #     'track_changes="on"')
+        # node.append(oxy_track_changes)
 
         # timestamp to be used for Oxygen track changes
         # format Oxygen requires to be recognized: 20130227T165821-0500

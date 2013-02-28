@@ -179,6 +179,11 @@ class LookupNames(scripts.ScriptBase):
                             util.annotate_xml(node, self.last_results, self.args.input,
                                 self.args.track_changes)
 
+                # if generating an xml file with track changes enabled,
+                # add a flag to tell Oxygen to turn on track changes for this document
+                if self.args.output_file and self.args.track_changes:
+                    util.enable_oxygen_track_changes(xmlobj.node)
+
         # Brief summary of API call activity
         print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
             's' if self.sc.total_api_calls != 1 else '',
