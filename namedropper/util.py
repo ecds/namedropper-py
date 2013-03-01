@@ -176,6 +176,19 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
     Currently using :mod:`logging` (info and warn) when VIAF look-up fails or
     attributes are not inserted to avoid overwriting existing values.
 
+    When track changes is requested, processing instructions will be added
+    around annotated names for review in OxygenXML 14.2+.  In cases where
+    a name was untagged, the text will be marked as a deletion and the
+    tagged version of the name will be marked as an insertion with a comment
+    containing the description of the DBpedia resource, to aid in identifying
+    whether the correct resource has been added.  If a recognized name was
+    previously tagged, a comment will be added indicating what attributes
+    were added, or would have been added if they did not conflict with
+    attributes already present in the document.  When using the
+    track changes option, it is recommended to also run meth:`enable_oxygen_track_changes`
+    once on the document, so that Oxygen will automatically open
+    the document with track changes turned on.
+
     :param node: lxml element node to be updated
     :param result: dbpedia spotlight result, as returned by
         :meth:`namedropper.spotlight.SpotlightClient.annotate`
@@ -184,12 +197,6 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
 
     :returns: total count of the number of entities inserted into the xml
     '''
-
-    # TODO: document oxygen track changes stuff
-    # - what tags get added where
-    # - probably want to run enable_oxygen_track_changes once at
-    # document level...
-
     # TEI tags will all use name
     if mode == 'tei':
         name_tag = 'name'
@@ -214,17 +221,8 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
     # are multiple whitespace-only nodes in a row
     prev_text = ''
 
-    # TODO: only do this once!
-    # FIXME: needs to be handled in script (via util?)
-    # since multiple subsections may be annotated and tagged
     if track_changes:
-        # insert a processing instruction so that Oxygen knows
-        # track changes mode should be enabled for this document
-        # oxy_track_changes = ProcessingInstruction('oxy_options',
-        #     'track_changes="on"')
-        # node.append(oxy_track_changes)
-
-        # timestamp to be used for Oxygen track changes
+        # generate timestamp to be used for Oxygen track changes
         # format Oxygen requires to be recognized: 20130227T165821-0500
         now = datetime.now(tzlocal())
         timestamp = now.strftime('%Y%m%dT%H%M%S%z')

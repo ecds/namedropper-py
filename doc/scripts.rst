@@ -1,4 +1,4 @@
-Scripts
+sScripts
 =======
 
 :mod:`namedropper` command-line scripts
@@ -91,6 +91,21 @@ or using them.
   reference a resource URI such as a DBpedia reference, non-personal names
   tagged in EAD will currently be added without any identifier or reference to
   the entity returned by DBpedia Spotlight.
+
+Generate XML with tagged names and OxygenXML track changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you use the ``--oxygen-track-changes`` flag when generating XML output, the
+resulting document will include OxygenXML 14.2+ track changes processing
+instructions, to allow for easier review and acceptance or rejection of the
+changes made. In cases where a name was untagged, the text will be marked as a
+deletion and the tagged version of the name will be marked as an insertion
+with a comment containing the description of the DBpedia resource, to aid in
+identifying whether the correct resource has been added.  If a recognized name
+was previously tagged, a comment will be added indicating what attributes were
+added, or would have been added if they did not conflict with attributes
+already present in the document.
+
 
 count-nametags
 --------------
