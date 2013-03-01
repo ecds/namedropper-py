@@ -47,6 +47,9 @@ class LookupNames(scripts.ScriptBase):
             help='''Generate an updated XML file with recognized names as the
             specified filename; it is recommended to restrict types to
             Person, Place, and/or Organisation (semi-EXPERIMENTAL)''')
+        parser.add_argument('--oxygen-track-changes', action='store_true',
+            dest='track_changes', default=False,
+            help='Use Oxygen track changes for changes made to generated XML')
         parser.add_argument('--csv', dest='csv_file',
             help=''' Generate a CSV file with recognized names, uri, similarity score, support score, and context''')
 
@@ -78,7 +81,6 @@ class LookupNames(scripts.ScriptBase):
     def run(self):
         # bind a handler for interrupt signal
         signal.signal(signal.SIGINT, self.interrupt_handler)
-
 
         # input type auto-detection handled in base class
         if self.args.input == 'tei' and not self.args.tei_xpath:
@@ -170,11 +172,17 @@ class LookupNames(scripts.ScriptBase):
                         # since content is likely to be much longer and less repetitive
                         self.list_names(txt)
 
-                        # NOTE: currently only works for TEI, and only supports simple xml
                         # if output file was requested and we have results, attempt
                         # to update the lxml node with the identified resources.
+                        # NOTE: not guaranteed to work for all cases of complicated xml
                         if self.args.output_file and self.last_results and 'Resources' in self.last_results:
-                            util.annotate_xml(node, self.last_results, self.args.input)
+                            util.annotate_xml(node, self.last_results, self.args.input,
+                                self.args.track_changes)
+
+                # if generating an xml file with track changes enabled,
+                # add a flag to tell Oxygen to turn on track changes for this document
+                if self.args.output_file and self.args.track_changes:
+                    util.enable_oxygen_track_changes(xmlobj.node)
 
         # Brief summary of API call activity
         print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
