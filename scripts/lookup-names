@@ -311,21 +311,29 @@ class LookupNames(scripts.ScriptBase):
     def get_ead_sections(self, ead):
         # generator: returns tuples of section label, list of NODES
 
-        # biographical statement
-        yield (unicode(ead.archdesc.biography_history.head),
-            [p.node for p in ead.archdesc.biography_history.content])
-        # note: beware that using unicode on xmlmap elements normalizes whitespace
-        # (good for lookup, bad for annotating original xml)
+
+        if ead.archdesc and ead.archdesc.biography_history:
+            # biographical statement
+            yield (unicode(ead.archdesc.biography_history.head),
+                [p.node for p in ead.archdesc.biography_history.content])
+            # note: beware that using unicode on xmlmap elements normalizes whitespace
+            # (good for lookup, bad for annotating original xml)
+        else:
+            print >> sys.stderr, '  Warning: collection level biography/history (archdesc/bioghist) not found'
 
         # return sections for series/subseries
-        if ead.dsc.c and ead.dsc.c[0].c:
-            for c01 in ead.dsc.c:
-                for section in self.get_ead_component_sections(c01):
-                    yield section
-        # return elements for findingaid with a single container list
+        if ead.dsc:
+            if ead.dsc.c and ead.dsc.c[0].c:
+                for c01 in ead.dsc.c:
+                    for section in self.get_ead_component_sections(c01):
+                        yield section
+            # return elements for findingaid with a single container list
+            else:
+                yield ('Container List',
+                    [c.did.unittitle.node for c in ead.dsc.c])
+
         else:
-            yield ('Container List',
-                [c.did.unittitle.node for c in ead.dsc.c])
+            print >> sys.stderr, '  Warning: Description of Subordinate Components (dsc) not found'
 
     def get_ead_component_sections(self, cseries):
         # recursive generator for c01/c02 series/subseries elements
