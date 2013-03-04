@@ -4,6 +4,7 @@ python:
   - "2.6"
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
+  - "sudo apt-get install python-dateutil"
   - "pip install . --use-mirrors"
 # not running coverage or building docs and mock is pre-installed, so dev reqs probably aren't needed
 # - "pip install -r pip-dev-req.txt --use-mirrors"
