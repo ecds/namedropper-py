@@ -50,7 +50,8 @@ install_requires = [
     'eulxml',
     'rdflib',
     'feedparser',
-    'unicodecsv==0.9.0'  # NOTE: temporary; 0.9.3 install is broken
+    'unicodecsv==0.9.0',  # NOTE: temporary; 0.9.3 install is broken
+    'python-dateutil',
 ]
 
 extras_require = {
