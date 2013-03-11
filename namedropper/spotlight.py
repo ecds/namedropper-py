@@ -216,7 +216,7 @@ class DBpediaResource(object):
         start = time.time()
         g = rdflib.graph.ConjunctiveGraph()
         g.load(self.uri)   # NOTE: not documented; actually calls parse
-        logger.info('Loaded RDF for %s (%0.3fs)' %
+        logger.debug('Loaded RDF for %s (%0.3fs)' %
                     (self.uri, time.time() - start))
         return g
 
