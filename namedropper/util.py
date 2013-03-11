@@ -48,8 +48,8 @@ def autodetect_file_type(filename):
         # should be something similar to this:
         #   Start tag expected, '<' not found, line 1, column 1
         return 'text'
-        logger.info('Could not parse %s as XML, assuming text input' % \
-            filename)
+        logger.info('Could not parse %s as XML, assuming text input' %
+                    filename)
 
 
 _viafids = {}
@@ -156,8 +156,13 @@ def is_place(item):
 
 
 def enable_oxygen_track_changes(node):
-    oxy_track_changes = ProcessingInstruction('oxy_options',
-        'track_changes="on"')
+    '''Add a processing instruction to a document with an OxygenXMl
+    option to enable the track changes mode.
+    '''
+    oxy_track_changes = ProcessingInstruction(
+        'oxy_options',
+        'track_changes="on"'
+    )
     node.append(oxy_track_changes)
 
 
@@ -282,7 +287,7 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
             # special case: exact match on start and end offsets *and* the tag
             # matches the tag we would insert (i.e., detected name is already tagged)
             if item_offset == current_offset and item_end_offset == text_end_offset \
-                and parent_node.tag[len(parent_node.prefix or ''):] == name_tag:
+                    and parent_node.tag[len(parent_node.prefix or ''):] == name_tag:
                 # store the node so that attributes can be updated if not already set
                 name_node = parent_node
                 existing_tag = True
@@ -318,8 +323,9 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                     # relative to the new node that was just inserted
 
                     # create a delete marker for the old text
-                    oxy_delete = ProcessingInstruction('oxy_delete',
-                        'author="namedropper" timestamp="%s" content="%s"' \
+                    oxy_delete = ProcessingInstruction(
+                        'oxy_delete',
+                        'author="namedropper" timestamp="%s" content="%s"'
                         % (timestamp, item['surfaceForm']))
                     # FIXME: escape content in surface form (quotes, etc)
 
@@ -331,8 +337,9 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                     # or is already in the document in another form)
                     comment = dbres.description or dbres.label or \
                         '(label/description unavailable)'
-                    oxy_insert_start = ProcessingInstruction('oxy_insert_start',
-                        'author="namedropper" timestamp="%s"' % timestamp + \
+                    oxy_insert_start = ProcessingInstruction(
+                        'oxy_insert_start',
+                        'author="namedropper" timestamp="%s"' % timestamp +
                         ' comment="%s"' % comment)
                     # marker for the end of the insertion
                     oxy_insert_end = ProcessingInstruction('oxy_insert_end')
@@ -342,7 +349,7 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                     parent_node.insert(parent_node.index(item_tag), oxy_insert_start)
                     # - insert end *after* new tag
                     parent_node.insert(parent_node.index(item_tag) + 1,
-                       oxy_insert_end)
+                                       oxy_insert_end)
 
                     # last pi is the one that will get the 'tail' text
                     last_node = oxy_insert_end
@@ -379,7 +386,7 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                     dbres = spotlight.DBpediaResource(item['URI'])
                     if dbres.geonames_id is not None:
                         attributes = {'source': 'geonames',
-                            'authfilenumber': dbres.geonames_id}
+                                      'authfilenumber': dbres.geonames_id}
                     else:
                         logger.info('GeoNames.org id not found for %s' % item['surfaceForm'])
 
@@ -405,8 +412,8 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                 # Warn and do NOT set if attributes are present (and different)
                 # FIXME: this may need some modification for EAD (since auth/source are a pair)
                 elif current_val != val:
-                    logger.warn('Not setting %s to %s because it already has a value of %s' %\
-                        (attr, val, current_val))
+                    logger.warn('Not setting %s to %s because it already has a value of %s' %
+                                (attr, val, current_val))
 
             # if updating an existing node and track changes is requested
             # add a comment about the change
@@ -416,24 +423,25 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                 comment = ''
                 if added_attr:
                     comment += 'Added attribute%s to existing %s tag: ' \
-                     % ('s' if len(added_attr) != 1 else '',
-                        name_node.xpath('local-name()')) + \
+                        % ('s' if len(added_attr) != 1 else '',
+                           name_node.xpath('local-name()')) + \
                         ', '.join('%s=%s' % (k, v) for k, v in added_attr.iteritems())
 
                 if len(added_attr) != len(attributes):
                     comment += '\nDid not replace attribute%s: ' % \
-                    ('s' if len(attributes) - len(added_attr) != 1 else '') + \
-                    ', '.join('%s=%s with %s' % (k, name_node.get(k), v)
+                        ('s' if len(attributes) - len(added_attr) != 1 else '') + \
+                        ', '.join('%s=%s with %s' % (k, name_node.get(k), v)
                         for k, v in attributes.iteritems() if k not in added_attr)
-                oxy_comment_start = ProcessingInstruction('oxy_comment_start',
-                    'author="namedropper" timestamp="%s"' % timestamp + \
+                oxy_comment_start = ProcessingInstruction(
+                    'oxy_comment_start',
+                    'author="namedropper" timestamp="%s"' % timestamp +
                     ' comment="%s"' % comment)
                 oxy_comment_end = ProcessingInstruction('oxy_comment_end')
                 name_parent = name_node.getparent()
                 name_parent.insert(name_parent.index(name_node),
-                    oxy_comment_start)
+                                   oxy_comment_start)
                 name_parent.insert(name_parent.index(name_node) + 1,
-                    oxy_comment_end)
+                                   oxy_comment_end)
                 # shift any tail text from name node to last pi
                 oxy_comment_end.tail = name_node.tail
                 name_node.tail = ''
