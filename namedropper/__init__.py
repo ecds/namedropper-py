@@ -20,3 +20,30 @@ __version_info__ = (0, 3, 0, 'dev')
 __version__ = '.'.join([str(i) for i in __version_info__[:-1]])
 if __version_info__[-1] is not None:
     __version__ += ('-%s' % (__version_info__[-1],))
+
+
+# basic logging configuration that can be used/customized
+# in command-line scripts
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'basic': {
+            'format': '%(levelname)s:%(name)s:%(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'formatter': 'basic',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'namedropper': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    }
+}

@@ -2,13 +2,17 @@
 
 import argparse
 from eulxml.xmlmap.teimap import TEI_NAMESPACE
+import logging
+from logging import config as logging_config
 import os
 from requests.exceptions import HTTPError
 import signal
 import sys
 import unicodecsv
 
-from namedropper import spotlight, util, scripts
+from namedropper import spotlight, util, scripts, LOGGING_CONFIG
+
+
 
 
 class LowerCaseAction(argparse.Action):
@@ -42,6 +46,10 @@ class LookupNames(scripts.ScriptBase):
             help='look up VIAF identifiers for recognized Person entities')
         parser.add_argument('--geonames', action='store_true', dest='geonames_lookup', default=False,
             help='look up GeoNames identifiers for recognized Place entities')
+
+        parser.add_argument('--loglevel', dest='loglevel', default='WARNING',
+            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+            help='Set output log level (default: %(default)s)')
 
         parser.add_argument('--output', '-o', dest='output_file',
             help='''Generate an updated XML file with recognized names as the
@@ -81,7 +89,6 @@ class LookupNames(scripts.ScriptBase):
     def run(self):
         # bind a handler for interrupt signal
         signal.signal(signal.SIGINT, self.interrupt_handler)
-
         # input type auto-detection handled in base class
         if self.args.input == 'tei' and not self.args.tei_xpath:
             print 'Error! --tei-xpath is required when input document is TEI\n'
@@ -107,6 +114,12 @@ class LookupNames(scripts.ScriptBase):
         spotlight_args = {'base_url': self.args.dbpedia_url,
             'confidence': self.args.confidence, 'support': self.args.support,
             'types': self.args.types}
+
+        # configur logging based on --loglevel option
+        log_cfg = LOGGING_CONFIG.copy()
+        log_cfg['handlers']['console']['level'] = self.args.loglevel
+        logging_config.dictConfig(log_cfg)
+
 
         # for now, script only has a single mode: output a list of recognized names and URIs
 
@@ -185,6 +198,8 @@ class LookupNames(scripts.ScriptBase):
                     util.enable_oxygen_track_changes(xmlobj.node)
 
         # Brief summary of API call activity
+        # FIXME: this only reports spotlight annotation calls
+        # clarify that; also report viaf api calls?
         print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
             's' if self.sc.total_api_calls != 1 else '',
             self.sc.total_api_duration)
