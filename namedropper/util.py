@@ -18,16 +18,16 @@ from datetime import datetime
 from dateutil.tz import tzlocal
 import logging
 from lxml.etree import XMLSyntaxError, parse, ProcessingInstruction
-from rdflib import Graph, Namespace, URIRef
 import re
-from namedropper import spotlight, viaf
+from namedropper import spotlight
 
 logger = logging.getLogger(__name__)
 
 
 def autodetect_file_type(filename):
-    '''Attempt to auto-detect input file type.  Currently supported types are EAD XML, TEI XML,
-    or text.  Any document that cannot be loaded as XML is assumed to be text.
+    '''Attempt to auto-detect input file type.  Currently supported
+    types are EAD XML, TEI XML, or text.  Any document that cannot be
+    loaded as XML is assumed to be text.
 
     :returns: "tei", "ead", "text", or None if file type is not recognized
     '''
@@ -50,70 +50,6 @@ def autodetect_file_type(filename):
         return 'text'
         logger.info('Could not parse %s as XML, assuming text input' %
                     filename)
-
-
-_viafids = {}
-'dictionary mapping dbpedia URIs to VIAF ids, to avoid repeat lookups'
-_dbpedia_viaf_lookups = []
-'list of dbpedia URIs that have been looked up in VIAF, to avoid repeat lookups'
-
-OWL = Namespace('http://www.w3.org/2002/07/owl#')
-':class:`rdflib.Namespace` for OWL (Web Ontology Language)'
-
-
-# FIXME: rename for clarity? really getting viaf uri;
-# perhaps move this logic into dbpedia resource object?
-def get_viafid(resource):
-    '''Search VIAF for a DBpedia resource to find the equivalent resource.
-    Currently only supports Persons; uses the owl:sameAs relation in VIAF data
-    to confirm that the correct resource has been found.
-
-    :params resource: dict for a single dbpedia resource, as included in
-        :meth:`namedropper.spotlight.SpotlightClient.annotate` results
-    :returns: matching VIAF URI, or None if no match was found
-    '''
-    res = spotlight.DBpediaResource(resource['URI'])
-    if res.uri not in _viafids:
-        viafid = None
-        viafclient = viaf.ViafClient()
-
-        # if we haven't already done so, check for viaf id in dbpedia first
-        if res.uri not in _dbpedia_viaf_lookups:
-            _dbpedia_viaf_lookups.append(res.uri)
-            viafid = res.viafid
-            if viafid:
-                # store url format, for consistency with viaf search results
-                _viafids[res.uri] = 'http://viaf.org/viaf/%s' % viafid
-
-        # if viaf id was not found in dbpedia, look in viaf
-        if not viafid:
-            # TODO: fall-back label? what should this actually do here?
-            if res.label is None:
-                return None
-
-            results = []
-            # search for corresponding viaf resource by type
-            if res.is_person:
-                results = viafclient.find_person(res.label)
-
-            # NOTE: only persons in VIAF have the dbpedia sameAs rel
-            # For now, only implementing person-name VIAF lookup
-
-            g = Graph()
-
-            # iterate through results and look for a result that has
-            # an owl:sameAs relation to the dbpedia resource
-            for result in results:
-                viaf_uriref = URIRef(result['link'])
-                # load the RDF for the VIAF entity and parse as an rdflib graph
-                g.parse(result['link'])
-                # check for the triple we're interested in
-                if (viaf_uriref, OWL['sameAs'], res.uriref) in g:
-                    viafid = result['link']
-                    _viafids[res.uri] = viafid
-                    break
-
-    return _viafids.get(res.uri, None)
 
 
 NORMALIZE_WHITESPACE_RE = re.compile('\s\s+', flags=re.MULTILINE)
@@ -140,21 +76,6 @@ def normalize_whitespace(txt, next=None, prev=None):
     return txt
 
 
-def is_person(item):
-    item_types = [i.strip() for i in item['types'].split(',')]
-    return 'DBpedia:Person' in item_types or 'Freebase:/people/person' in item_types
-
-
-def is_org(item):
-    item_types = [i.strip() for i in item['types'].split(',')]
-    return 'DBpedia:Organisation' in item_types
-
-
-def is_place(item):
-    item_types = [i.strip() for i in item['types'].split(',')]
-    return 'DBpedia:Place' in item_types
-
-
 def enable_oxygen_track_changes(node):
     '''Add a processing instruction to a document with an OxygenXMl
     option to enable the track changes mode.
@@ -163,8 +84,30 @@ def enable_oxygen_track_changes(node):
         'oxy_options',
         'track_changes="on"'
     )
+    # FIXME: shouldn't we be able to add this to the root node
+    # and detect if it is already there?
     node.append(oxy_track_changes)
 
+
+class AnnotateXml(object):
+
+    # init should set params about annotation
+    # - enable viaf
+    # - enable geonames
+    # - track changes
+    # - tei/ead? (autodetect?)
+    #  -- generalize autodetect file to take a node (base/common method?)
+    #     and then use that
+
+    def annotate(node, annotations):
+        pass
+
+    # separate method to generate tag, attributes
+    # separate method to add track changes
+
+
+# TODO: break into a class with methods for generating tags,
+# adding track changes, etc...
 
 def annotate_xml(node, result, mode='tei', track_changes=False):
     '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
@@ -239,18 +182,20 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
             item = resources.pop(0)
             item_offset = int(item['offset'])
             item_end_offset = item_offset + len(item['surfaceForm'])
+            # dbpedia resource for this spotlight result
+            dbres = spotlight.DBpediaResource(item['URI'])
 
             # determine the tag name to be used for this item
             # TODO/NOTE: might be worth refactoring tag name/attribute logic into
             # a separate function
             tei_type = None
-            if is_person(item):
+            if dbres.is_person:
                 tei_type = 'person'
                 ead_tag = 'persname'
-            elif is_org(item):
+            elif dbres.is_org:
                 tei_type = 'org'
                 ead_tag = 'corpname'
-            elif is_place(item):
+            elif dbres.is_place:
                 tei_type = 'place'
                 ead_tag = 'geogname'
             else:
@@ -376,21 +321,30 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                 # EAD can't reference dbpedia URI; lookup in VIAF
                 attributes = {}
                 if ead_tag == 'persname':
-                    viaf_uri = get_viafid(item)
-                    if viaf_uri:
-                        viafid = viaf_uri.rstrip('/').rsplit('/', 1)[-1]
-                        attributes = {'source': 'viaf', 'authfilenumber': viafid}
+                    # TODO: viaf/geonames uri/id needs to be optional
+                    viafid = None
+                    if dbres.viafid:
+                        viafid = dbres.viafid
+                    elif dbres.viaf_uri:
+                        viafid = dbres.viaf_uri.rstrip('/').rsplit('/', 1)[-1]
                     else:
                         logger.info('VIAF id not found for %s' % item['surfaceForm'])
+
+                    if viafid:
+                        attributes = {
+                            'source': 'viaf',
+                            'authfilenumber': viafid
+                        }
                 if ead_tag == 'geogname':
-                    dbres = spotlight.DBpediaResource(item['URI'])
                     if dbres.geonames_id is not None:
                         attributes = {'source': 'geonames',
                                       'authfilenumber': dbres.geonames_id}
                     else:
-                        logger.info('GeoNames.org id not found for %s' % item['surfaceForm'])
+                        logger.info('GeoNames.org id not found for %s' %
+                                    item['surfaceForm'])
 
                 # for now, use dbpedia identifiers where no author id is available
+                # TODO: *or* if viaf/geonames not requested
                 if not attributes:
                     # use unique identifier portion of dbpedia uri as id
                     base_uri, dbpedia_id = item['URI'].rsplit('/', 1)

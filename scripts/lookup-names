@@ -268,13 +268,13 @@ class LookupNames(scripts.ScriptBase):
                 rsrc_type = 'place'
 
             self.csv_writer.writerow([
-                    result['surfaceForm'],
-                    result['URI'],
-                    result['similarityScore'],
-                    result['support'],
-                    rsrc_type,
-                    context
-                ])
+                result['surfaceForm'],
+                result['URI'],
+                result['similarityScore'],
+                result['support'],
+                rsrc_type,
+                context
+            ])
 
     def list_names(self, text):
         # run spotlight annotation on a text string and print out identified
@@ -288,12 +288,12 @@ class LookupNames(scripts.ScriptBase):
         else:
             for resource in results:
                 self.print_name(resource['surfaceForm'], resource['URI'],
-                    resource['similarityScore'], resource['support'])
+                                resource['similarityScore'], resource['support'])
                 dbres = spotlight.DBpediaResource(resource['URI'])
                 if self.args.viaf_lookup and dbres.is_person:
-                    viafid = util.get_viafid(resource)
-                    if viafid:
-                        print '  %s' % viafid
+                    #viafid = util.get_viafid(resource)
+                    if dbres.viaf_uri:
+                        print '  %s' % dbres.viaf_uri
 
                 if self.args.geonames_lookup and dbres.is_place:
                     if dbres.geonames_uri:

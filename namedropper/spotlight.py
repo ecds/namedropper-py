@@ -22,7 +22,10 @@ import rdflib
 import requests
 import time
 
+from namedropper import viaf
+
 logger = logging.getLogger(__name__)
+
 
 # TODO: this should probably be split out into a submodule
 
@@ -32,6 +35,8 @@ DBPEDIA_OWL = rdflib.Namespace('http://dbpedia.org/ontology/')
 GEO = rdflib.Namespace('http://www.w3.org/2003/01/geo/wgs84_pos#')
 FOAF = rdflib.Namespace("http://xmlns.com/foaf/0.1/")
 SCHEMA_ORG = rdflib.Namespace('http://schema.org/')
+OWL = rdflib.Namespace('http://www.w3.org/2002/07/owl#')
+':class:`rdflib.Namespace` for OWL (Web Ontology Language)'
 
 
 class SpotlightClient(object):
@@ -192,6 +197,12 @@ def cached_property(f):
     return property(get)
 
 
+# FIXME: maybe store on DBpediaResource class object?
+#_viafids = {}
+'''dictionary mapping dbpedia URIs to VIAF ids, to avoid repeat lookups
+within the same session'''
+
+
 class DBpediaResource(object):
     '''An object to encapsulate properties and functionality
     related to a specific dbpedia item.
@@ -249,6 +260,51 @@ class DBpediaResource(object):
         '''VIAF identifier for this resource (generally only available
             for persons, and not available for all persons)'''
         return self._graph_value(DBPPROP.viaf)
+
+    @cached_property
+    def viaf_uri(self):
+        '''Search VIAF for a DBpedia resource to find the equivalent resource.
+        Currently only supports Persons; uses the owl:sameAs relation in VIAF data
+        to confirm that the correct resource has been found.
+
+        :params resource: dict for a single dbpedia resource, as included in
+            :meth:`namedropper.spotlight.SpotlightClient.annotate` results
+            :returns: matching VIAF URI, or None if no match was found
+        '''
+        # if self.uri not in _viafids:
+        #     viafid = None
+
+        # use viafid property from dbpedia, if available
+        if self.viafid:
+            return 'http://viaf.org/viaf/%s' % self.viafid
+
+        else:
+            results = []
+            # search for corresponding viaf resource by type
+
+            if self.is_person:
+                # NOTE: only persons in VIAF have the dbpedia sameAs rel
+                # For now, only implementing person-name VIAF lookup
+                logger.info('VIAF id for %s not found in DBpedia; searching VIAF' %
+                           (self.label))
+                viafclient = viaf.ViafClient()
+                results = viafclient.find_person(self.label)
+
+            g = rdflib.Graph()
+
+            # iterate through results and look for a result that has
+            # an owl:sameAs relation to the dbpedia resource
+            for result in results:
+                viaf_uriref = rdflib.URIRef(result['link'])
+                # load the RDF for the VIAF entity and parse a s an rdflib graph
+                g.parse(result['link'])
+                # check for the triple we're interested in
+                if (viaf_uriref, OWL['sameAs'], self.uriref) in g:
+                    viaf_uri = result['link']
+                    #_viafids[self.uri] = viaf_uri
+                    return viaf_uri
+
+    #return _viafids.get(res.uri, None)
 
     @cached_property
     def geonames_uri(self):
