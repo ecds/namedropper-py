@@ -14,6 +14,24 @@ any necessary information about installation or upgrade notes.
     tagged names in an EAD document, in order to do simple comparison of
     tagged and untagged documents.
 
+* Updates to **lookup-names** script
+
+  * When a user runs the lookup-names script to generate a CSV file, the resulting output
+    includes resource type for person, place, or organization so that results can be
+    filtered and organized by broad types.
+  * When users interrupts the lookup-names script while it is running, it stops
+    processing gracefully and reports on what was done so that user can get an idea
+    of the output without waiting for the script to complete on a long document.
+  * When a user runs the lookup names script with options that generate no results,
+    the script does not create a CSV file or an enhanced xml file (even if those options
+    were specified) and prints a message explaining why, so that the user is not confused
+    by empty or unchanged files.
+  * Bug fix: When a user runs a lookup-names script on an XML file that does not have
+    all of its component parts, it should not crash.
+  * When users run the lookup-names script to generate annotated XML, they can optionally
+    add tags with Oxygen history tracking comments so that changes can be reviewed and
+    accepted or rejected in Oxygen.
+
 0.2.1
 -----
 
