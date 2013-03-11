@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 import logging
 import rdflib
 import requests
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,8 @@ class SpotlightClient(object):
         :returns: dict with information on identified resources
         '''
         # types e.g., 'Person,Place'  or ['Person', 'Place']
+        start = time.time()
+
         annotate_url = '%s/annotate' % self.base_url
         data = {'text': text}
 
@@ -121,6 +124,9 @@ class SpotlightClient(object):
         response = self._call(rqst_method, annotate_url, **rqst_args)
         # # API docs suggest using POST instead of GET for large text content;
         # for POST, a content-type of application/x-www-form-urlencoded is required
+
+        logger.debug('annotate \'%s...\': %s (%0.3f sec)' %
+                     (text[:10], response.status_code, time.time() - start))
 
         if response.status_code == requests.codes.ok:
             return self._clean_response(response.json())
@@ -206,17 +212,19 @@ class DBpediaResource(object):
 
     @cached_property
     def graph(self):
-        # TODO: use requests/http proxy ?
+        # NOTE: rdflib load uses HTTP_PROXY when it is set
+        start = time.time()
         g = rdflib.graph.ConjunctiveGraph()
-        # NOTE: might be interesting to log how long this takes
-        logger.info('Loading RDF data for %s' % self.uri)
         g.load(self.uri)   # NOTE: not documented; actually calls parse
+        logger.info('Loaded RDF for %s (%0.3fs)' %
+                    (self.uri, time.time() - start))
         return g
 
     @cached_property
     def label(self):
         '''preferred label for this resource, in current language'''
-        results = self.graph.preferredLabel(self.uriref,
+        results = self.graph.preferredLabel(
+            self.uriref,
             lang=self.language)
         if results:
             return unicode(results[0][1])
@@ -232,7 +240,7 @@ class DBpediaResource(object):
         # convenience method to get the value for a predicate
         try:
             return self.graph.value(subject=self.uriref,
-                predicate=pred).toPython()
+                                    predicate=pred).toPython()
         except AttributeError:
             return None
 
@@ -281,7 +289,7 @@ class DBpediaResource(object):
     def is_person(self):
         'boolean flag to indicate if this resource represents a person'
         return any(((self.uriref, rdflib.RDF.type, t) in self.graph
-                for t in self.person_types))
+                    for t in self.person_types))
 
     # RDF org types
     org_types = [DBPEDIA_OWL.Organisation]
@@ -291,7 +299,7 @@ class DBpediaResource(object):
         '''boolean flag to indicate if this resource represents an
         organization or corporate group'''
         return any(((self.uriref, rdflib.RDF.type, t) in self.graph
-                for t in self.org_types))
+                    for t in self.org_types))
 
     # RDF place types
     place_types = [DBPEDIA_OWL.Place]
@@ -300,7 +308,7 @@ class DBpediaResource(object):
     def is_place(self):
         'boolean flag to indicate if this resource represents a place'
         return any(((self.uriref, rdflib.RDF.type, t) in self.graph
-                for t in self.place_types))
+                   for t in self.place_types))
 
     @property
     def type(self):
@@ -314,4 +322,3 @@ class DBpediaResource(object):
             return 'Organization'
         else:
             return ''
-
