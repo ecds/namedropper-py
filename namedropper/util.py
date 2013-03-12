@@ -91,6 +91,7 @@ def enable_oxygen_track_changes(node):
 
 class AnnotateXml(object):
 
+    xml_format = None
     # init should set params about annotation
     # - enable viaf
     # - enable geonames
@@ -99,8 +100,253 @@ class AnnotateXml(object):
     #  -- generalize autodetect file to take a node (base/common method?)
     #     and then use that
 
-    def annotate(node, annotations):
-        pass
+    current_node = None
+
+    def __init__(self, mode):
+        self.xml_format = mode
+        # pass in xmlobj to autodetect type?
+        # TODO: list of supported modes
+        # TODO: options for viaf/geonames (default to false)
+
+    def get_tag(self, res):
+        '''Get the name of the tag to be inserted, based on the current
+        document mode and the type of DBpedia resource.
+
+        :param res: :class:`namedropper.spotlight.DBpediaResource`
+           instance for the tag to be inserted
+
+        :returns: string tag
+        '''
+        if self.xml_format == 'tei':
+            tag = self.get_tei_tag(res)
+        if self.xml_format == 'ead':
+            tag = self.get_ead_tag(res)
+
+        # create the new node in the same namespace as its ancestor node
+        if self.current_node is not None and self.current_node.nsmap and \
+                self.current_node.prefix in self.current_node.nsmap:
+            tag = '{%s}%s' % \
+                (self.current_node.nsmap[self.current_node.prefix], tag)
+        return tag
+
+    def get_attributes(self, res):
+        '''Get the attributes to be inserted, based on the current
+        document mode and the type of DBpediaResource.
+
+        :param res: :class:`namedropper.spotlight.DBpediaResource`
+        :returns: dictionary of attribute names -> values
+        '''
+        if self.xml_format == 'tei':
+            return self.get_tei_attributes(res)
+        if self.xml_format == 'ead':
+            return self.get_ead_attributes(res)
+
+    def get_tei_tag(self, res):
+        # TEI tags will all use name
+        return 'name'
+
+    def get_tei_attributes(self, res):
+        tei_type = None
+        if res.is_person:
+            tei_type = 'person'
+        elif res.is_org:
+            tei_type = 'org'
+        elif res.is_place:
+            tei_type = 'place'
+        # FIXME: error if type not set
+        # TODO: optionally use viaf uri or geonames uri
+        return {'type': tei_type, 'ref': res.uri}
+
+    def get_ead_tag(self, res):
+        if res.is_person:
+            tag = 'persname'
+        elif res.is_org:
+            tag = 'corpname'
+        elif res.is_place:
+            tag = 'geogname'
+        else:
+            # use generic fallback tag for ead if we can't identify the resource type
+            tag = 'name'
+
+        return tag
+
+    def get_ead_attributes(self, res):
+        attributes = {}
+        # TODO: viaf/geonames uri/id needs to be optional
+        if res.is_person:
+            viafid = None
+            if res.viafid:
+                viafid = res.viafid
+            elif res.viaf_uri:
+                viafid = res.viaf_uri.rstrip('/').rsplit('/', 1)[-1]
+            else:
+                logger.info('VIAF id not found for %s' % res.label)
+
+            if viafid:
+                attributes = {
+                    'source': 'viaf',
+                    'authfilenumber': viafid
+                }
+
+        elif res.is_place:
+            if res.geonames_id is not None:
+                attributes = {'source': 'geonames',
+                              'authfilenumber': res.geonames_id}
+            else:
+                logger.info('GeoNames.org id not found for %s' %
+                            res.label)
+
+        # for now, use dbpedia identifiers where no author id is available
+        # TODO: *or* if viaf/geonames not requested
+        if not attributes:
+            # use unique identifier portion of dbpedia uri as id
+            base_uri, dbpedia_id = res.uri.rsplit('/', 1)
+            attributes = {
+                'source': 'dbpedia',
+                'authfilenumber': dbpedia_id
+            }
+
+        return attributes
+
+    def annotate(self, node, annotations):
+        self.current_node = node
+        # NOTE: should probably set current_node back to None on completion
+
+        # find all text nodes under this node
+        text_list = node.xpath('.//text()')
+
+        # get the list of identified resources from the dbpedia spotlight result
+        resources = list(annotations['Resources'])
+
+        # starting values
+        current_offset = 0  # current index into the node
+        inserted = 0  # number of items inserted into the xml
+        item = None  # current dbpedia item being processed
+
+        # aggregate of all normalized text before the current node
+        # (used for whitespace normalization on the current node)
+        # NOTE: aggregating all previous text in order to properly handle cases where there
+        # are multiple whitespace-only nodes in a row
+        prev_text = ''
+
+        # iterate until we run out of text nodes or resources
+        while (item or resources) and text_list:
+            # if there is no current item, get the next item
+            if item is None:
+                item = resources.pop(0)
+                item_offset = int(item['offset'])
+                item_end_offset = item_offset + len(item['surfaceForm'])
+                # dbpedia resource for this spotlight result
+                dbres = spotlight.DBpediaResource(item['URI'],
+                                                  spotlight_info=item)
+
+            # current text node to be updated
+            text_node = text_list.pop(0)
+            next_text = text_list[0] if text_list else ''
+            normalized_text = normalize_whitespace(unicode(text_node), next_text, prev_text)
+            text_end_offset = current_offset + len(normalized_text)
+            # get the parent node for the current text
+            parent_node = text_node.getparent()
+            # find node immediately after the current text node,
+            # so we know where to insert name tags
+            if text_node == parent_node.text:
+                children = list(parent_node)
+                next_node = children[0] if children else None
+            elif text_node == parent_node.tail:
+                next_node = parent_node.getnext()   # next sibling or None
+
+            # next resource is inside the current text
+            if item_offset >= current_offset and item_end_offset <= text_end_offset:
+                # text before the item: beginning of this node up to relative item offset
+                text_before = normalized_text[:item_offset - current_offset]
+                # text after the item: end item offset to end of text, relative to current offset
+                text_after = normalized_text[item_end_offset - current_offset:]
+
+                # special case: exact match on start and end offsets *and* the tag
+                # matches the tag we would insert (i.e., detected name is already tagged)
+                if item_offset == current_offset and item_end_offset == text_end_offset \
+                        and parent_node.tag[len(parent_node.prefix or ''):] == self.get_tag(dbres):
+                    # store the node so that attributes can be updated if not already set
+                    name_node = parent_node
+                    existing_tag = True
+
+                else:
+                    existing_tag = False
+                    # update current text node with the text before the item
+                    if text_node == text_node.getparent().text:
+                        text_node.getparent().text = text_before
+                    elif text_node == text_node.getparent().tail:
+                        text_node.getparent().tail = text_before
+                        # override the parent node: name tag should be inserted in the
+                        # true parent node, not the preceding node
+                        parent_node = parent_node.getparent()
+
+                    item_tag = node.makeelement(self.get_tag(dbres),
+                                                nsmap=node.nsmap)
+                    # text content of the node is the recognized form of the name
+                    item_tag.text = item['surfaceForm']
+
+                    # if there is a node immediately after current text, insert new node before it
+                    if next_node is not None:
+                        node_index = parent_node.index(next_node)
+                        parent_node.insert(node_index, item_tag)
+                    # otherwise, just append at the end of the parent node
+                    else:
+                        parent_node.append(item_tag)
+                    inserted += 1  # update item tag count
+
+                    last_node = item_tag
+
+                    # oxy track changes stuff here...
+
+                    name_node = item_tag
+
+                    # set text after the item to the "tail" text of the new item tag
+                    last_node.tail = text_after
+
+                    # set the remainder text as the next text node to be processed
+                    # - find via xpath so we have a "smart string" / lxml element string with getparent()
+                    remainder_node = last_node.xpath('./following-sibling::text()[1]')[0]
+
+                    text_list.insert(0, remainder_node)
+
+                # set attributes on the newly inserted OR existing name tag
+                added_attr = {}
+                for attr, val in self.get_attributes(dbres).iteritems():
+                    current_val = name_node.get(attr, None)
+
+                    # add attribute values if they are not already set
+                    if current_val is None:
+                        name_node.set(attr, val)
+                        added_attr[attr] = val
+
+                    # Warn and do NOT set if attributes are present (and different)
+                    # FIXME: this may need some modification for EAD (since auth/source are a pair)
+                    elif current_val != val:
+                        logger.warn('Not setting %s to %s because it already has a value of %s' %
+                                    (attr, val, current_val))
+
+                # TODO: track changes on existing tag
+
+                # new current offset is the end of the last item
+                current_offset = item_end_offset
+
+                # clear item to indicate next one should be grabbed
+                item = None
+
+                # add current processed text to previous
+                prev_text += text_before + item_tag.text
+
+            # the next item is not inside the current text node
+            # update offsets and previous text for the next loop,
+            # still looking for the current item
+            else:
+                current_offset += len(normalized_text)
+                # append the processed text to previous
+                prev_text += normalized_text
+
+        return inserted
+
 
     # separate method to generate tag, attributes
     # separate method to add track changes
@@ -275,7 +521,6 @@ def annotate_xml(node, result, mode='tei', track_changes=False):
                     # FIXME: escape content in surface form (quotes, etc)
 
                     # create a marker for the beginning of an insertion
-                    dbres = spotlight.DBpediaResource(item['URI'])
                     # use the description if possible, to provide enough
                     # context for reviewers to determine if this is the correct
                     # entity (other information doesn't seem to be useful
