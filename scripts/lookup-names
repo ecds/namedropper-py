@@ -188,9 +188,16 @@ class LookupNames(scripts.ScriptBase):
                         # if output file was requested and we have results, attempt
                         # to update the lxml node with the identified resources.
                         # NOTE: not guaranteed to work for all cases of complicated xml
-                        if self.args.output_file and self.last_results and 'Resources' in self.last_results:
-                            util.annotate_xml(node, self.last_results, self.args.input,
-                                self.args.track_changes)
+                        if self.args.output_file and self.last_results \
+                                and 'Resources' in self.last_results:
+
+                            # FIXME: ideally, init annotater once on entire node
+                            annotater = util.AnnotateXml(
+                                self.args.input,
+                                track_changes=self.args.track_changes)
+                            annotater.annotate(node, self.last_results)
+                            # util.annotate_xml(node, self.last_results, self.args.input,
+                            #     self.args.track_changes)
 
                 # if generating an xml file with track changes enabled,
                 # add a flag to tell Oxygen to turn on track changes for this document
@@ -289,7 +296,8 @@ class LookupNames(scripts.ScriptBase):
             for resource in results:
                 self.print_name(resource['surfaceForm'], resource['URI'],
                                 resource['similarityScore'], resource['support'])
-                dbres = spotlight.DBpediaResource(resource['URI'])
+                dbres = spotlight.DBpediaResource(resource['URI'],
+                                                  spotlight_info=resource)
                 if self.args.viaf_lookup and dbres.is_person:
                     #viafid = util.get_viafid(resource)
                     if dbres.viaf_uri:

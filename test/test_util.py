@@ -351,7 +351,8 @@ class AnnotateXmlTest(unittest.TestCase):
     def test_annotate_xml__with_existing_tags(self):
         # article with names already tagged
         annotations = ilnnames_annotations.article4_result
-        article = self.tei.node.xpath('//t:div2[@xml:id="iln38.1069.006a"]', **self.tei_ns)[0]
+        article = self.tei.node.xpath('//t:div2[@xml:id="iln38.1069.006a"]',
+                                      **self.tei_ns)[0]
         existing_names = article.xpath('.//t:name', **self.tei_ns)
         inserted = self.tei_annotater.annotate(article, annotations)
 

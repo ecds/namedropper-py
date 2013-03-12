@@ -102,11 +102,14 @@ class AnnotateXml(object):
 
     current_node = None
 
-    def __init__(self, mode):
+    track_changes = False
+
+    def __init__(self, mode, track_changes=False):
         self.xml_format = mode
         # pass in xmlobj to autodetect type?
         # TODO: list of supported modes
         # TODO: options for viaf/geonames (default to false)
+        self.track_changes = track_changes
 
     def get_tag(self, res):
         '''Get the name of the tag to be inserted, based on the current
@@ -295,11 +298,13 @@ class AnnotateXml(object):
                         parent_node.append(item_tag)
                     inserted += 1  # update item tag count
 
-                    last_node = item_tag
+                    if self.track_changes:
+                        last_node = self.track_changes_inserted(
+                            item_tag, item['surfaceForm'], dbres)
+                    else:
+                        last_node = item_tag
 
-                    # oxy track changes stuff here...
-
-                    name_node = item_tag
+                    name_node = item_tag   # FIXME: clean up naming conventions
 
                     # set text after the item to the "tail" text of the new item tag
                     last_node.tail = text_after
@@ -312,7 +317,8 @@ class AnnotateXml(object):
 
                 # set attributes on the newly inserted OR existing name tag
                 added_attr = {}
-                for attr, val in self.get_attributes(dbres).iteritems():
+                attributes = self.get_attributes(dbres)
+                for attr, val in attributes.iteritems():
                     current_val = name_node.get(attr, None)
 
                     # add attribute values if they are not already set
@@ -327,6 +333,17 @@ class AnnotateXml(object):
                                     (attr, val, current_val))
 
                 # TODO: track changes on existing tag
+                if self.track_changes and existing_tag:
+                    last_node = self.track_changes_comment(
+                        name_node, attributes, added_attr)
+
+                    # next text node to process is the former name node tail text
+                    # replace it with the tail text shifted to the processing instruction
+                    text_list.pop(0)
+                    # duplicated from insertion logic...
+                    remainder_node = last_node.xpath('./following-sibling::text()[1]')[0]
+                    text_list.insert(0, remainder_node)
+                    #text_list.insert(0, oxy_comment_end.tail)
 
                 # new current offset is the end of the last item
                 current_offset = item_end_offset
@@ -346,6 +363,86 @@ class AnnotateXml(object):
                 prev_text += normalized_text
 
         return inserted
+
+    def track_changes_timestamp(self):
+        # generate timestamp to be used for Oxygen track changes
+        # format Oxygen requires to be recognized: 20130227T165821-0500
+        return datetime.now(tzlocal()).strftime('%Y%m%dT%H%M%S%z')
+
+    def track_changes_inserted(self, new_node, old_text, dbres):
+        # create & insert oxygen processing instructions
+        # relative to the new node that was just inserted
+        timestamp = self.track_changes_timestamp()
+
+        # create a delete marker for the old text
+        oxy_delete = ProcessingInstruction(
+            'oxy_delete',
+            'author="namedropper" timestamp="%s" content="%s"'
+            % (timestamp, old_text))
+        # FIXME: escape content in surface form (quotes, etc)
+
+        # Create a marker for the beginning of an insertion.
+        # Use the description if possible, to provide enough
+        # context for reviewers to determine if this is the correct
+        # entity (other information doesn't seem to be useful
+        # or is already in the document in another form)
+        comment = dbres.description or dbres.label or \
+            '(label/description unavailable)'
+        oxy_insert_start = ProcessingInstruction(
+            'oxy_insert_start',
+            'author="namedropper" timestamp="%s"' % timestamp +
+            ' comment="%s"' % comment)
+        # marker for the end of the insertion
+        oxy_insert_end = ProcessingInstruction('oxy_insert_end')
+
+        # - add deletion, then insertion start just before new tag
+        parent_node = new_node.getparent()
+        parent_node.insert(parent_node.index(new_node), oxy_delete)
+        parent_node.insert(parent_node.index(new_node), oxy_insert_start)
+        # - insert end *after* new tag
+        parent_node.insert(parent_node.index(new_node) + 1,
+                           oxy_insert_end)
+
+        # return last processing instruction, since it may
+        # need to have 'tail' text appended
+        return oxy_insert_end
+
+    def track_changes_comment(self, node, attributes, added_attr):
+        # FIXME: comment 'author' should probably be a variable
+        # TODO: comment text
+        comment = ''
+        timestamp = self.track_changes_timestamp()
+
+        if added_attr:
+            comment += 'Added attribute%s to existing %s tag: ' \
+                % ('s' if len(added_attr) != 1 else '',
+                   node.xpath('local-name()')) + \
+                ', '.join('%s=%s' % (k, v) for k, v in added_attr.iteritems())
+
+        if len(added_attr) != len(attributes):
+            comment += '\nDid not replace attribute%s: ' % \
+                ('s' if len(attributes) - len(added_attr) != 1 else '') + \
+                ', '.join('%s=%s with %s' % (k, node.get(k), v)
+                for k, v in attributes.iteritems() if k not in added_attr)
+        oxy_comment_start = ProcessingInstruction(
+            'oxy_comment_start',
+            'author="namedropper" timestamp="%s"' % timestamp +
+            ' comment="%s"' % comment)
+        oxy_comment_end = ProcessingInstruction('oxy_comment_end')
+        parent_node = node.getparent()
+        parent_node.insert(parent_node.index(node),
+                           oxy_comment_start)
+        parent_node.insert(parent_node.index(node) + 1,
+                           oxy_comment_end)
+        # shift any tail text from name node to last pi
+        oxy_comment_end.tail = node.tail
+        node.tail = ''
+
+        # end comment processing instruction is now last node
+        # return in case any tail text needs adjustment
+        return oxy_comment_end
+
+
 
 
     # separate method to generate tag, attributes
