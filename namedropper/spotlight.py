@@ -210,16 +210,27 @@ class DBpediaResource(object):
     :param uri: dbpedia resource uri
     :param language: optional language code, for multilingual properties
        like label; defaults to 'en'
+    :param spotlight_info: optional dictionary of data returned from
+        spotlight annotation, to avoid unnecessary look-ups (e.g., for
+        type of resource)
     '''
 
     # TODO: possibly add a mechanism to init from an annotation
     # result (pre-populate any values available from api result)
 
-    def __init__(self, uri, language='en'):
+    _spotlight_types = []
+
+    def __init__(self, uri, language='en', spotlight_info={}):
         self.uri = uri
         self.uriref = rdflib.URIRef(uri)
         base_url, self.id = uri.rsplit('/', 1)
         self.language = language
+
+        # store any useful data from spotlight result
+        if 'types' in spotlight_info:
+            self._spotlight_types = spotlight_info['types'].split(',')
+        # NOTE: if spotlight api adds other data (like label),
+        # update to use that also
 
     @cached_property
     def graph(self):
@@ -340,29 +351,45 @@ class DBpediaResource(object):
 
     # RDF person types
     person_types = [FOAF.Person, DBPEDIA_OWL.Person, SCHEMA_ORG.Person]
+    spotlight_person_types = ['DBpedia:Person', 'Schema:Person']
 
     @cached_property
     def is_person(self):
         'boolean flag to indicate if this resource represents a person'
+        # here and for is_org/is_place, use types from spotlight result
+        # when available, to avoid extra external requests
+        if self._spotlight_types:
+            return any(t in self._spotlight_types
+                       for t in self.spotlight_person_types)
+
         return any(((self.uriref, rdflib.RDF.type, t) in self.graph
                     for t in self.person_types))
 
     # RDF org types
     org_types = [DBPEDIA_OWL.Organisation]
+    spotlight_org_types = ['DBpedia:Organisation']
 
     @cached_property
     def is_org(self):
         '''boolean flag to indicate if this resource represents an
         organization or corporate group'''
+        if self._spotlight_types:
+            return any(t in self._spotlight_types
+                       for t in self.spotlight_org_types)
+
         return any(((self.uriref, rdflib.RDF.type, t) in self.graph
                     for t in self.org_types))
 
     # RDF place types
     place_types = [DBPEDIA_OWL.Place]
+    spotlight_place_types = ['DBpedia:Place']
 
     @cached_property
     def is_place(self):
         'boolean flag to indicate if this resource represents a place'
+        if self._spotlight_types:
+            return any(t in self._spotlight_types
+                       for t in self.spotlight_place_types)
         return any(((self.uriref, rdflib.RDF.type, t) in self.graph
                    for t in self.place_types))
 
