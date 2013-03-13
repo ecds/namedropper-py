@@ -126,7 +126,7 @@ class AnnotateXmlTest(unittest.TestCase):
         # simplest case: article with a single paragraph and no mixed content or nested tags
         annotations = ilnnames_annotations.article3_result
         nodelist = self.tei.node.xpath('//t:div2[@xml:id="iln42.1183.005"]/t:p', **self.tei_ns)
-        article3 = nodelist[0]
+        article3 = deepcopy(nodelist[0])
         text_content = article3.xpath('normalize-space(.)')
         inserted = self.tei_annotater.annotate(article3, annotations)
 
@@ -150,6 +150,72 @@ class AnnotateXmlTest(unittest.TestCase):
             # uri & value should match dbpedia result
             self.assertEqual(result['URI'], names[i].get('ref'))
             self.assertEqual(result['surfaceForm'], names[i].text)
+
+    @patch('namedropper.util.spotlight')
+    def test_annotate__viaf_geonames(self, mock_spotlight):
+        # setup mock dbpedia resource
+        mock_rsrc = mock_spotlight.DBpediaResource.return_value
+        mock_rsrc.geonames_id = '67890'
+        mock_rsrc.geonames_uri = 'http://sws.geonames.org/67890/'
+        mock_rsrc.viafid = '12345'
+        mock_rsrc.viaf_uri = 'http://viaf.org/viaf/12345'
+        mock_rsrc.uri = 'http://dbpedia.org/resource/TestResource'
+        # first simulate all resources as person
+        mock_rsrc.is_person = True
+        mock_rsrc.is_org = False
+        mock_rsrc.is_place = False
+
+        # simple case from first test
+        annotations = ilnnames_annotations.article3_result
+        nodelist = self.tei.node.xpath('//t:div2[@xml:id="iln42.1183.005"]/t:p', **self.tei_ns)
+        article3 = deepcopy(nodelist[0])
+
+        # is person, has viaf, but viaf not enabled
+        article3 = deepcopy(nodelist[0])
+        self.tei_annotater.annotate(article3, annotations)
+        names = article3.xpath('t:name', **self.tei_ns)
+        # dbpedia uri should still be used
+        self.assertEqual(
+            mock_rsrc.uri, names[0].get('ref'),
+            'dbpedia uri should be used for persons when viaf lookup is not enabled')
+        # enable viaf
+        self.tei_annotater.viaf = True
+        article3 = deepcopy(nodelist[0])
+        self.tei_annotater.annotate(article3, annotations)
+        names = article3.xpath('t:name', **self.tei_ns)
+        self.assertEqual(
+            mock_rsrc.viaf_uri, names[0].get('ref'),
+            'viaf uri should be used when available and viaf lookup enabled')
+        # no viaf uri
+        mock_rsrc.viaf_uri = None
+        article3 = deepcopy(nodelist[0])
+        self.tei_annotater.annotate(article3, annotations)
+        names = article3.xpath('t:name', **self.tei_ns)
+        self.assertEqual(
+            mock_rsrc.uri, names[0].get('ref'),
+            'dbpedia uri should be used if viaf uri is unavailabe')
+
+        # simulate place resource
+        mock_rsrc.is_place = True
+        mock_rsrc.is_person = False
+        # is place, has geonames uri, but geonames not enabled
+        article3 = deepcopy(nodelist[0])
+        self.tei_annotater.annotate(article3, annotations)
+        names = article3.xpath('t:name', **self.tei_ns)
+        # dbpedia uri should still be used
+        self.assertEqual(mock_rsrc.uri, names[0].get('ref'))
+        # enable geonames
+        self.tei_annotater.geonames = True
+        article3 = deepcopy(nodelist[0])
+        self.tei_annotater.annotate(article3, annotations)
+        names = article3.xpath('t:name', **self.tei_ns)
+        self.assertEqual(mock_rsrc.geonames_uri, names[0].get('ref'))
+        mock_rsrc.geonames_uri = None
+        article3 = deepcopy(nodelist[0])
+        self.tei_annotater.annotate(article3, annotations)
+        names = article3.xpath('t:name', **self.tei_ns)
+        # dbpedia uri should be used if geonames uri is not available
+        self.assertEqual(mock_rsrc.uri, names[0].get('ref'))
 
     def test_annotate__end_tag(self):
         # slightly less simple case
@@ -434,9 +500,40 @@ class AnnotateXmlTest(unittest.TestCase):
         paragraph = deepcopy(self.ead.archdesc.biography_history.content[0].node)
         inserted = self.ead_annotater.annotate(paragraph, annotations)
         names = paragraph.xpath('.//e:geogname', **self.ead_ns)
+        # should *NOT* be set because annotater is not set to use geonames
+        self.assertNotEqual(
+            'geonames', names[0].get('source'),
+            'geonames source should not be used when geonames is not enabled')
+
+        paragraph = deepcopy(self.ead.archdesc.biography_history.content[0].node)
+        # enable geonames
+        self.ead_annotater.geonames = True
+        inserted = self.ead_annotater.annotate(paragraph, annotations)
+        names = paragraph.xpath('.//e:geogname', **self.ead_ns)
         # source/auth# should be set from dbpedia geoname identifier
         self.assertEqual('geonames', names[0].get('source'))
         self.assertEqual(mock_rsrc.geonames_id, names[0].get('authfilenumber'))
+
+        # test viaf
+        mock_rsrc.viafid = '98765'
+        mock_rsrc.is_person = True
+        mock_rsrc.is_place = False
+        # viaf not enabled
+        paragraph = deepcopy(self.ead.archdesc.biography_history.content[0].node)
+        inserted = self.ead_annotater.annotate(paragraph, annotations)
+        names = paragraph.xpath('.//e:persname', **self.ead_ns)
+        self.assertNotEqual(
+            'viaf', names[0].get('source'),
+            'viaf source should not be used when viaf is not enabled')
+
+        paragraph = deepcopy(self.ead.archdesc.biography_history.content[0].node)
+        # enable viaf lookup
+        self.ead_annotater.viaf = True
+        inserted = self.ead_annotater.annotate(paragraph, annotations)
+        names = paragraph.xpath('.//e:persname', **self.ead_ns)
+        # source/auth# should be set from dbpedia viaf identifier
+        self.assertEqual('viaf', names[0].get('source'))
+        self.assertEqual(mock_rsrc.viafid, names[0].get('authfilenumber'))
 
     def test_track_changes_inserted(self):
         xml = '''<p>some text <name>Some Name</name></p>'''

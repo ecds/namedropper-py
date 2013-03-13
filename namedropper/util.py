@@ -90,27 +90,66 @@ def enable_oxygen_track_changes(node):
 
 
 class AnnotateXml(object):
+    '''Annotate xml based on dbpedia spotlight annotation results.
+
+    Currently using :mod:`logging` (info and warn) when VIAF look-up fails or
+    attributes are not inserted to avoid overwriting existing values.
+
+    When track changes is requested, processing instructions will be added
+    around annotated names for review in OxygenXML 14.2+.  In cases where
+    a name was untagged, the text will be marked as a deletion and the
+    tagged version of the name will be marked as an insertion with a comment
+    containing the description of the DBpedia resource, to aid in identifying
+    whether the correct resource has been added.  If a recognized name was
+    previously tagged, a comment will be added indicating what attributes
+    were added, or would have been added if they did not conflict with
+    attributes already present in the document.
+
+    When using the track changes option, it is recommended to also run
+    meth:`enable_oxygen_track_changes` once on the document, so that
+    Oxygen will automatically open the document with track changes
+    turned on.
+
+    :param mode: mode (tei or ead) of tags to insert
+    :param viaf: if True, convert DBpedia person URIs to VIAF URIs when
+        possible (optional, defaults to False)
+    :param geonames: if True, convert DBpedia person URIs to GeoNames.org
+        URIs when  possible (optional, defaults to False)
+    :param track_changes: if True, flag annotations with OxygenXML
+        track changes processing instructions for later review
+    '''
 
     xml_format = None
     # init should set params about annotation
-    # - enable viaf
-    # - enable geonames
-    # - track changes
-    # - tei/ead? (autodetect?)
     #  -- generalize autodetect file to take a node (base/common method?)
     #     and then use that
+
+    viaf = False
+    '''VIAF flag: if true, annotate will convert dbpedia person URIs to
+    VIAF URIs when possible'''
+
+    geonames = False
+    '''GeoNames flag: if true, annotate will convert dbpedia place URIs to
+    GeoNames URIs when possible'''
 
     current_node = None
 
     track_changes = False
+    '''OxygenXML track changes flag: if true, annotation will be tagged
+    with OxygenXML track changes processing instruction, to enable
+    review within Oxygen Author mode'''
+
     track_changes_author = 'namedropper'
 
-    def __init__(self, mode, track_changes=False):
+    def __init__(self, mode, viaf=False, geonames=False,
+                 track_changes=False):
         self.xml_format = mode
-        # pass in xmlobj to autodetect type?
+        # pass in xmlobj to autodetect type?+
         # TODO: list of supported modes
         # TODO: options for viaf/geonames (default to false)
         self.track_changes = track_changes
+        self.viaf = viaf
+        self.geonames = geonames
 
     def get_tag(self, res):
         '''Get the name of the tag to be inserted, based on the current
@@ -157,9 +196,25 @@ class AnnotateXml(object):
             tei_type = 'org'
         elif res.is_place:
             tei_type = 'place'
-        # FIXME: error if type not set
+        # TODO: error if type not set
         # TODO: optionally use viaf uri or geonames uri
-        return {'type': tei_type, 'ref': res.uri}
+
+        uri = res.uri
+        # if enabled, use viaf uri for persons
+        if self.viaf and res.is_person:
+            if res.viaf_uri is not None:
+                uri = res.viaf_uri
+            else:
+                logger.info('VIAF URI not found for %s' % res.label)
+
+        # if enabled, use geonames uri for places
+        if self.geonames and res.is_place:
+            if res.geonames_uri is not None:
+                uri = res.geonames_uri
+            else:
+                logger.info('GeoNames.org URI not found for %s' % res.label)
+
+        return {'type': tei_type, 'ref': uri}
 
     def get_ead_tag(self, res):
         if res.is_person:
@@ -176,8 +231,9 @@ class AnnotateXml(object):
 
     def get_ead_attributes(self, res):
         attributes = {}
-        # TODO: viaf/geonames uri/id needs to be optional
-        if res.is_person:
+
+        # use viaf for persons if configured
+        if self.viaf and res.is_person:
             viafid = None
             if res.viafid:
                 viafid = res.viafid
@@ -192,7 +248,7 @@ class AnnotateXml(object):
                     'authfilenumber': viafid
                 }
 
-        elif res.is_place:
+        if self.geonames and res.is_place:
             if res.geonames_id is not None:
                 attributes = {'source': 'geonames',
                               'authfilenumber': res.geonames_id}
@@ -213,6 +269,23 @@ class AnnotateXml(object):
         return attributes
 
     def annotate(self, node, annotations):
+        '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
+        that dbpedia annotate was called on the **normalized** text from this node.
+        Currently updates the node that is passed in; whitespace will be normalized in text
+        nodes where name tags are inserted.  For TEI, DBpedia URIs are inserted as
+        **ref** attributes; since EAD does not support referencing URIs, VIAF ids
+        will be used where possible (currently only supports lookup for personal names).
+
+        If recognized names are already tagged as names in the existing XML, no
+        new name tag will be inserted; attributes will only be added if they are not
+        present in the original node.
+
+        :param node: lxml element node to be updated
+        :param annotations: dbpedia spotlight result, as returned by
+            :meth:`namedropper.spotlight.SpotlightClient.annotate`
+
+        :returns: total count of the number of entities inserted into the xml
+        '''
         self.current_node = node
         # NOTE: should probably set current_node back to None on completion
 
