@@ -103,6 +103,7 @@ class AnnotateXml(object):
     current_node = None
 
     track_changes = False
+    track_changes_author = 'namedropper'
 
     def __init__(self, mode, track_changes=False):
         self.xml_format = mode
@@ -377,8 +378,8 @@ class AnnotateXml(object):
         # create a delete marker for the old text
         oxy_delete = ProcessingInstruction(
             'oxy_delete',
-            'author="namedropper" timestamp="%s" content="%s"'
-            % (timestamp, old_text))
+            'author="%s" timestamp="%s" content="%s"'
+            % (self.track_changes_author, timestamp, old_text))
         # FIXME: escape content in surface form (quotes, etc)
 
         # Create a marker for the beginning of an insertion.
@@ -388,9 +389,12 @@ class AnnotateXml(object):
         # or is already in the document in another form)
         comment = dbres.description or dbres.label or \
             '(label/description unavailable)'
+        # convert quotes to single quotes to avoid breaking comment text
+        comment = comment.replace('"', '\'')
         oxy_insert_start = ProcessingInstruction(
             'oxy_insert_start',
-            'author="namedropper" timestamp="%s"' % timestamp +
+            'author="%s" timestamp="%s"' %
+            (self.track_changes_author, timestamp) +
             ' comment="%s"' % comment)
         # marker for the end of the insertion
         oxy_insert_end = ProcessingInstruction('oxy_insert_end')
@@ -408,8 +412,6 @@ class AnnotateXml(object):
         return oxy_insert_end
 
     def track_changes_comment(self, node, attributes, added_attr):
-        # FIXME: comment 'author' should probably be a variable
-        # TODO: comment text
         comment = ''
         timestamp = self.track_changes_timestamp()
 
@@ -426,7 +428,8 @@ class AnnotateXml(object):
                 for k, v in attributes.iteritems() if k not in added_attr)
         oxy_comment_start = ProcessingInstruction(
             'oxy_comment_start',
-            'author="namedropper" timestamp="%s"' % timestamp +
+            'author="%s" timestamp="%s"' %
+            (self.track_changes_author, timestamp) +
             ' comment="%s"' % comment)
         oxy_comment_end = ProcessingInstruction('oxy_comment_end')
         parent_node = node.getparent()
@@ -442,17 +445,14 @@ class AnnotateXml(object):
         # return in case any tail text needs adjustment
         return oxy_comment_end
 
-
-
-
     # separate method to generate tag, attributes
     # separate method to add track changes
 
 
-# TODO: break into a class with methods for generating tags,
-# adding track changes, etc...
+# TODO: remove this once docstring has been re-used for new class-based
+# implementation
 
-def annotate_xml(node, result, mode='tei', track_changes=False):
+def OLDannotate_xml(node, result, mode='tei', track_changes=False):
     '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
     that dbpedia annotate was called on the **normalized** text from this node.
     Currently updates the node that is passed in; whitespace will be normalized in text

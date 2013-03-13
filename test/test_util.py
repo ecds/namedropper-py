@@ -22,11 +22,12 @@ import os
 from eulxml.xmlmap import load_xmlobject_from_file
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD, EAD_NAMESPACE
 from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+from lxml import etree
 from mock import patch, Mock
+from StringIO import StringIO
 
 from namedropper import spotlight
-from namedropper.util import autodetect_file_type, annotate_xml, \
-    AnnotateXml
+from namedropper.util import autodetect_file_type, AnnotateXml
 from fixtures import ilnnames_annotations, hobsbaum_annotations
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -431,8 +432,144 @@ class AnnotateXmlTest(unittest.TestCase):
         mock_rsrc.geonames_id = '3356234'
         # re-annotate
         paragraph = deepcopy(self.ead.archdesc.biography_history.content[0].node)
-        inserted = annotate_xml(paragraph, annotations, mode='ead')
+        inserted = self.ead_annotater.annotate(paragraph, annotations)
         names = paragraph.xpath('.//e:geogname', **self.ead_ns)
         # source/auth# should be set from dbpedia geoname identifier
         self.assertEqual('geonames', names[0].get('source'))
         self.assertEqual(mock_rsrc.geonames_id, names[0].get('authfilenumber'))
+
+    def test_track_changes_inserted(self):
+        xml = '''<p>some text <name>Some Name</name></p>'''
+        test_doc = etree.parse(StringIO(xml))
+        name_node = list(test_doc.iter('name'))[0]
+        rsrc = Mock(spec=spotlight.DBpediaResource)
+        rsrc.uri = 'http://dbpedia.org/resource/TestResource'
+
+        initial_length = len(list(test_doc.iter()))
+
+        # no label/description
+        rsrc.description = None
+        rsrc.label = None
+        old_text = 'Some Name'
+        self.tei_annotater.track_changes_inserted(
+            name_node, old_text, rsrc)
+        # should have added 3 nodes: 1 deletion, 2 for start/end insertion
+        self.assertEqual(initial_length + 3, len(list(test_doc.iter())))
+
+        preceding_sibs = list(name_node.itersiblings(preceding=True))
+        following_sib = list(name_node.itersiblings())
+
+        # second (farthest away) preceding sibling should be deletion,
+        # then insert start
+        deletion = preceding_sibs[1]
+        insert_start = preceding_sibs[0]
+        # insert end should be immediately after the node
+        insert_end = following_sib[0]
+        # inspect deletion marker
+        self.assertEqual('oxy_delete', deletion.target)
+        self.assertEqual(self.tei_annotater.track_changes_author,
+                         deletion.get('author'))
+        self.assertEqual(old_text, deletion.get('content'))
+
+        # inspect insert start
+        self.assertEqual('oxy_insert_start', insert_start.target)
+        self.assertEqual(self.tei_annotater.track_changes_author,
+                         insert_start.get('author'))
+        self.assertEqual('(label/description unavailable)',
+                         insert_start.get('comment'))
+        # inspect insert end
+        self.assertEqual('oxy_insert_end', insert_end.target)
+
+        # reset to test dbpedia with label
+        test_doc = etree.parse(StringIO(xml))
+        name_node = list(test_doc.iter('name'))[0]
+
+        # no description but a label
+        rsrc.label = 'Some person\'s name'
+        old_text = 'Some Name'
+        self.tei_annotater.track_changes_inserted(
+            name_node, old_text, rsrc)
+        insert_start = list(name_node.itersiblings(preceding=True))[0]
+        self.assertEqual(
+            rsrc.label, insert_start.get('comment'),
+            'dbpedia resource label should be used as insert comment ' +
+            ' when no description is available')
+
+        # reset to test dbpedia with description
+        test_doc = etree.parse(StringIO(xml))
+        name_node = list(test_doc.iter('name'))[0]
+
+        # description (with quotes)
+        rsrc.description = 'This person was "born" and is famous for ...'
+        escaped_desc = rsrc.description.replace('"', '\'')
+
+        old_text = 'Some Name'
+        self.tei_annotater.track_changes_inserted(
+            name_node, old_text, rsrc)
+        insert_start = list(name_node.itersiblings(preceding=True))[0]
+        self.assertEqual(
+            escaped_desc, insert_start.get('comment'),
+            'dbpedia resource description should be used as ' +
+            'insertion comment when available')
+
+    def test_track_changes_comment(self):
+        xml = '''<p>some text <name>Some Name</name> more text</p>'''
+        test_doc = etree.parse(StringIO(xml))
+        name_node = list(test_doc.iter('name'))[0]
+        initial_length = len(list(test_doc.iter()))
+
+        attr = {'source': 'dbpedia', 'authfilenumber': '12345'}
+        added_attr = attr
+        self.tei_annotater.track_changes_comment(
+            name_node, attr, added_attr)
+
+        # should have added 2 nodes: start/end of comment
+        self.assertEqual(initial_length + 2, len(list(test_doc.iter())))
+
+        comment_start = list(name_node.itersiblings(preceding=True))[0]
+        comment_end = list(name_node.itersiblings())[0]
+
+        self.assertEqual('oxy_comment_start', comment_start.target)
+        self.assertEqual(self.tei_annotater.track_changes_author,
+                         comment_start.get('author'))
+        self.assertEqual('oxy_comment_end', comment_end.target)
+
+        # inspect comment contents - all added
+        comment_text = comment_start.get('comment')
+        self.assert_('Added attributes ' in comment_text)
+        for name, value in added_attr.iteritems():
+            self.assert_('%s=%s' % (name, value) in comment_text)
+
+        # reset to test not all attributes added
+        test_doc = etree.parse(StringIO(xml))
+        name_node = list(test_doc.iter('name'))[0]
+        name_node.set('authfilenumber', 'foo')
+        added_attr = {'source': 'dbpedia'}
+        self.tei_annotater.track_changes_comment(
+            name_node, attr, added_attr)
+        comment_start = list(name_node.itersiblings(preceding=True))[0]
+        comment_text = comment_start.get('comment')
+        self.assert_('Added attribute ' in comment_text)
+        for name, value in added_attr.iteritems():
+            self.assert_('%s=%s' % (name, value) in comment_text)
+        self.assert_('Did not replace attribute: %s=%s with %s' %
+                     ('authfilenumber', 'foo', '12345')
+                     in comment_text)
+
+        # reset to test NO attributes added
+        test_doc = etree.parse(StringIO(xml))
+        name_node = list(test_doc.iter('name'))[0]
+        name_node.set('source', 'viaf')
+        name_node.set('authfilenumber', '98765')
+        added_attr = {}
+        self.tei_annotater.track_changes_comment(
+            name_node, attr, added_attr)
+        comment_start = list(name_node.itersiblings(preceding=True))[0]
+        comment_text = comment_start.get('comment')
+        self.assert_('Added attribute' not in comment_text)
+        for name, value in added_attr.iteritems():
+            self.assert_('%s=%s' % (name, value) in comment_text)
+        self.assert_('Did not replace attributes: ' in comment_text)
+        for name, value in attr.iteritems():
+            self.assert_('%s=%s with %s' % (name, name_node.get(name), value)
+                         in comment_text)
