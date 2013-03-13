@@ -98,7 +98,7 @@ class LookupNames(scripts.ScriptBase):
         self.csv_writer = None
         if self.args.csv_file:
             self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'),
-                encoding="utf-8")
+                                                encoding="utf-8")
 
             # early exit if we don't have csv writer
             if self.args.csv_file and not self.csv_writer:
@@ -109,17 +109,28 @@ class LookupNames(scripts.ScriptBase):
             # done here because in certain modes it will call
             # populate_csv_from_results more than once
             self.csv_writer.writerow(["Name", "URI", "Similarity Score",
-               "Support Score", "Type", "Context"])
+                                      "Support Score", "Type", "Context"])
 
-        spotlight_args = {'base_url': self.args.dbpedia_url,
-            'confidence': self.args.confidence, 'support': self.args.support,
-            'types': self.args.types}
+        spotlight_args = {
+            'base_url': self.args.dbpedia_url,
+            'confidence': self.args.confidence,
+            'support': self.args.support,
+            'types': self.args.types
+        }
 
         # configur logging based on --loglevel option
         log_cfg = LOGGING_CONFIG.copy()
         log_cfg['handlers']['console']['level'] = self.args.loglevel
         logging_config.dictConfig(log_cfg)
 
+        # check and warn if no proxy is set
+        if 'HTTP_PROXY' not in os.environ:
+            warning = '''
+WARNING: It is recommended to use a web proxy to improve performance
+and reduce the load on external services.  If possible, you should
+configure your proxy via the HTTP_PROXY environment variable.
+'''
+            print >> sys.stderr, warning
 
         # for now, script only has a single mode: output a list of recognized names and URIs
 
