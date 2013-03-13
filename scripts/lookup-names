@@ -207,9 +207,9 @@ class LookupNames(scripts.ScriptBase):
                     util.enable_oxygen_track_changes(xmlobj.node)
 
         # Brief summary of API call activity
-        # FIXME: this only reports spotlight annotation calls
-        # clarify that; also report viaf api calls?
-        print >> sys.stderr, '\nMade %d API call%s in %s' % \
+        # NOTE: this only reports spotlight annotation calls
+        # TODO: consider reporting viaf api calls, dbpedia data lookups, etc
+        print >> sys.stderr, '\nMade %d DBpedia Spotlight API call%s in %s' % \
             (self.sc.total_api_calls,
              's' if self.sc.total_api_calls != 1 else '',
              self.sc.total_api_duration)
