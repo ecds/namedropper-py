@@ -191,10 +191,12 @@ class LookupNames(scripts.ScriptBase):
                         if self.args.output_file and self.last_results \
                                 and 'Resources' in self.last_results:
 
-                            # FIXME: ideally, init annotater once on entire node
+                            # FIXME: ideally, init annotater once on entire document
                             annotater = util.AnnotateXml(
                                 self.args.input,
-                                track_changes=self.args.track_changes)
+                                track_changes=self.args.track_changes,
+                                viaf=self.args.viaf_lookup,
+                                geonames=self.args.geonames_lookup)
                             annotater.annotate(node, self.last_results)
                             # util.annotate_xml(node, self.last_results, self.args.input,
                             #     self.args.track_changes)
@@ -207,9 +209,10 @@ class LookupNames(scripts.ScriptBase):
         # Brief summary of API call activity
         # FIXME: this only reports spotlight annotation calls
         # clarify that; also report viaf api calls?
-        print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
-            's' if self.sc.total_api_calls != 1 else '',
-            self.sc.total_api_duration)
+        print >> sys.stderr, '\nMade %d API call%s in %s' % \
+            (self.sc.total_api_calls,
+             's' if self.sc.total_api_calls != 1 else '',
+             self.sc.total_api_duration)
 
         if self.args.csv_file and self.total == 0:
             # close csv writer and remove the created file (headers only)
