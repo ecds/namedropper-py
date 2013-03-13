@@ -98,7 +98,7 @@ class LookupNames(scripts.ScriptBase):
         self.csv_writer = None
         if self.args.csv_file:
             self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'),
-                encoding="utf-8")
+                                                encoding="utf-8")
 
             # early exit if we don't have csv writer
             if self.args.csv_file and not self.csv_writer:
@@ -109,17 +109,28 @@ class LookupNames(scripts.ScriptBase):
             # done here because in certain modes it will call
             # populate_csv_from_results more than once
             self.csv_writer.writerow(["Name", "URI", "Similarity Score",
-               "Support Score", "Type", "Context"])
+                                      "Support Score", "Type", "Context"])
 
-        spotlight_args = {'base_url': self.args.dbpedia_url,
-            'confidence': self.args.confidence, 'support': self.args.support,
-            'types': self.args.types}
+        spotlight_args = {
+            'base_url': self.args.dbpedia_url,
+            'confidence': self.args.confidence,
+            'support': self.args.support,
+            'types': self.args.types
+        }
 
         # configur logging based on --loglevel option
         log_cfg = LOGGING_CONFIG.copy()
         log_cfg['handlers']['console']['level'] = self.args.loglevel
         logging_config.dictConfig(log_cfg)
 
+        # check and warn if no proxy is set
+        if 'HTTP_PROXY' not in os.environ:
+            warning = '''
+WARNING: It is recommended to use a web proxy to improve performance
+and reduce the load on external services.  If possible, you should
+configure your proxy via the HTTP_PROXY environment variable.
+'''
+            print >> sys.stderr, warning
 
         # for now, script only has a single mode: output a list of recognized names and URIs
 
@@ -188,9 +199,18 @@ class LookupNames(scripts.ScriptBase):
                         # if output file was requested and we have results, attempt
                         # to update the lxml node with the identified resources.
                         # NOTE: not guaranteed to work for all cases of complicated xml
-                        if self.args.output_file and self.last_results and 'Resources' in self.last_results:
-                            util.annotate_xml(node, self.last_results, self.args.input,
-                                self.args.track_changes)
+                        if self.args.output_file and self.last_results \
+                                and 'Resources' in self.last_results:
+
+                            # FIXME: ideally, init annotater once on entire document
+                            annotater = util.AnnotateXml(
+                                self.args.input,
+                                track_changes=self.args.track_changes,
+                                viaf=self.args.viaf_lookup,
+                                geonames=self.args.geonames_lookup)
+                            annotater.annotate(node, self.last_results)
+                            # util.annotate_xml(node, self.last_results, self.args.input,
+                            #     self.args.track_changes)
 
                 # if generating an xml file with track changes enabled,
                 # add a flag to tell Oxygen to turn on track changes for this document
@@ -198,11 +218,12 @@ class LookupNames(scripts.ScriptBase):
                     util.enable_oxygen_track_changes(xmlobj.node)
 
         # Brief summary of API call activity
-        # FIXME: this only reports spotlight annotation calls
-        # clarify that; also report viaf api calls?
-        print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
-            's' if self.sc.total_api_calls != 1 else '',
-            self.sc.total_api_duration)
+        # NOTE: this only reports spotlight annotation calls
+        # TODO: consider reporting viaf api calls, dbpedia data lookups, etc
+        print >> sys.stderr, '\nMade %d DBpedia Spotlight API call%s in %s' % \
+            (self.sc.total_api_calls,
+             's' if self.sc.total_api_calls != 1 else '',
+             self.sc.total_api_duration)
 
         if self.args.csv_file and self.total == 0:
             # close csv writer and remove the created file (headers only)
@@ -268,13 +289,13 @@ class LookupNames(scripts.ScriptBase):
                 rsrc_type = 'place'
 
             self.csv_writer.writerow([
-                    result['surfaceForm'],
-                    result['URI'],
-                    result['similarityScore'],
-                    result['support'],
-                    rsrc_type,
-                    context
-                ])
+                result['surfaceForm'],
+                result['URI'],
+                result['similarityScore'],
+                result['support'],
+                rsrc_type,
+                context
+            ])
 
     def list_names(self, text):
         # run spotlight annotation on a text string and print out identified
@@ -288,12 +309,13 @@ class LookupNames(scripts.ScriptBase):
         else:
             for resource in results:
                 self.print_name(resource['surfaceForm'], resource['URI'],
-                    resource['similarityScore'], resource['support'])
-                dbres = spotlight.DBpediaResource(resource['URI'])
+                                resource['similarityScore'], resource['support'])
+                dbres = spotlight.DBpediaResource(resource['URI'],
+                                                  spotlight_info=resource)
                 if self.args.viaf_lookup and dbres.is_person:
-                    viafid = util.get_viafid(resource)
-                    if viafid:
-                        print '  %s' % viafid
+                    #viafid = util.get_viafid(resource)
+                    if dbres.viaf_uri:
+                        print '  %s' % dbres.viaf_uri
 
                 if self.args.geonames_lookup and dbres.is_place:
                     if dbres.geonames_uri:

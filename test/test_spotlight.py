@@ -111,6 +111,16 @@ class DBpediaResourceTest(unittest.TestCase):
         'belfast': os.path.join(BASE_DIR, 'fixtures', 'belfast.rdf'),
     }
 
+    SPOTLIGHT_INFO = {
+        "URI": "http://dbpedia.org/resource/Edgar_Lee_Masters",
+        "support": "98",
+        "types": "DBpedia:Writer,DBpedia:Artist,DBpedia:Person,Schema:Person,Freebase:/book/author,Freebase:/book,Freebase:/award/award_winner,Freebase:/award,Freebase:/people/deceased_person,Freebase:/people,Freebase:/award/award_nominee,Freebase:/people/person",
+        "surfaceForm": "masters",
+        "offset": "315",
+        "similarityScore": "0.171113520860672",
+        "percentageOfSecondRank": "0.6365209051735774"
+    }
+
     def test_init(self):
         res = DBpediaResource(self.URI['heaney'])
         self.assertEqual(self.URI['heaney'], res.uri)
@@ -120,6 +130,15 @@ class DBpediaResourceTest(unittest.TestCase):
 
         res = DBpediaResource(self.URI['heaney'], 'ja')
         self.assertEqual('ja', res.language)
+
+        # test init with spotlight info
+        with patch('namedropper.spotlight.rdflib') as mockrdflib:
+            res = DBpediaResource(self.SPOTLIGHT_INFO['URI'],
+                                  spotlight_info=self.SPOTLIGHT_INFO)
+            self.assertEqual(True, res.is_person)
+            self.assert_(not mockrdflib.graph.ConjunctiveGraph.called,
+                         'rdflib.graph should not be loaded when ' +
+                         'types are available via spotlight info')
 
     def test_rdf_properties(self):
         g = rdflib.graph.Graph()
