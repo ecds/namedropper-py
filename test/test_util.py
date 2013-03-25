@@ -122,6 +122,24 @@ class AnnotateXmlTest(unittest.TestCase):
                           'authfilenumber': 'TestResource'},
                          self.ead_annotater.get_attributes(rsrc))
 
+    def test_is_insertable(self):
+        rsrc = Mock(spec=spotlight.DBpediaResource)
+        rsrc.uri = 'http://dbpedia.org/resource/TestResource'
+        rsrc.is_person = False
+        rsrc.is_place = False
+        rsrc.is_org = False
+
+        # EAD & tag could not be determined
+        self.assertFalse(self.ead_annotater.is_insertable(rsrc, 'test'))
+
+        # TEI and type attribute not set
+        self.assertFalse(self.tei_annotater.is_insertable(rsrc, 'test'))
+
+        # known type - should be ok for either
+        rsrc.is_org = True
+        self.assertTrue(self.ead_annotater.is_insertable(rsrc, 'test'))
+        self.assertTrue(self.tei_annotater.is_insertable(rsrc, 'test'))
+
     def test_annotate__simplest(self):
         # simplest case: article with a single paragraph and no mixed content or nested tags
         annotations = ilnnames_annotations.article3_result
