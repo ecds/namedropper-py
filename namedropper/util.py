@@ -198,7 +198,6 @@ class AnnotateXml(object):
         elif res.is_place:
             tei_type = 'place'
         # TODO: error if type not set
-        # TODO: optionally use viaf uri or geonames uri
 
         uri = res.uri
         # if enabled, use viaf uri for persons
