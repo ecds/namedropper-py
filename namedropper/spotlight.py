@@ -351,7 +351,8 @@ class DBpediaResource(object):
 
     # RDF person types
     person_types = [FOAF.Person, DBPEDIA_OWL.Person, SCHEMA_ORG.Person]
-    spotlight_person_types = ['DBpedia:Person', 'Schema:Person']
+    spotlight_person_types = ['DBpedia:Person', 'Schema:Person',
+                              'Freebase:/people/person',]
 
     @cached_property
     def is_person(self):
