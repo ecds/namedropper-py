@@ -166,7 +166,8 @@ class AnnotateXml(object):
             tag = self.get_ead_tag(res)
 
         # create the new node in the same namespace as its ancestor node
-        if self.current_node is not None and self.current_node.nsmap and \
+        if tag is not None and self.current_node is not None and \
+                self.current_node.nsmap and \
                 self.current_node.prefix in self.current_node.nsmap:
             tag = '{%s}%s' % \
                 (self.current_node.nsmap[self.current_node.prefix], tag)
@@ -224,8 +225,13 @@ class AnnotateXml(object):
         elif res.is_place:
             tag = 'geogname'
         else:
+            # None should indicate we don't know what tag to use for this resource
+            tag = None
+
+            # NOTE: formerly used to return generic name tag; but that
+            # was hiding errors for unsupported resource types
             # use generic fallback tag for ead if we can't identify the resource type
-            tag = 'name'
+            #tag = 'name'
 
         return tag
 
@@ -267,6 +273,18 @@ class AnnotateXml(object):
             }
 
         return attributes
+
+    def is_insertable(self, dbres, text):
+        # check if a tag can be inserted
+
+        # first: can we create a tag / attributes for this item?
+        if (self.xml_format == 'ead' and self.get_tag(dbres) is None) or \
+           (self.xml_format == 'tei' and self.get_attributes(dbres)['type'] is None):
+            logger.warning('Not tagging "%s" as %s (name type not supported or could not be determined)' %
+                          (text, dbres.uri))
+            return False
+
+        return True
 
     def annotate(self, node, annotations):
         '''Annotate xml based on dbpedia spotlight annotation results.  Assumes
@@ -316,6 +334,12 @@ class AnnotateXml(object):
                 # dbpedia resource for this spotlight result
                 dbres = spotlight.DBpediaResource(item['URI'],
                                                   spotlight_info=item)
+
+            # before processing, check that we can insert tag
+            if not self.is_insertable(dbres, item['surfaceForm']):
+                # clear out the item and skip to the next one
+                item = None
+                continue
 
             # current text node to be updated
             text_node = text_list.pop(0)
