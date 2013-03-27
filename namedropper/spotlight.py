@@ -243,8 +243,10 @@ class DBpediaResource(object):
         # NOTE: this is fairly slow for some resources (e.g., places like
         # London or United States which include data about lots of people
         # associated with that place).
-        # Might be better to do generate a graph via a targeted
-        # sparql query...
+        # We could generate a graph with only the properties we need
+        # via a targeted sparql query, but initial investigation indicates
+        # that is significantly slower for the majority of our resources
+        # (~1 second instead of ~0.1 second)
 
         return g
 
