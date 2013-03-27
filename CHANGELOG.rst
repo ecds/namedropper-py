@@ -26,11 +26,16 @@ any necessary information about installation or upgrade notes.
     the script does not create a CSV file or an enhanced xml file (even if those options
     were specified) and prints a message explaining why, so that the user is not confused
     by empty or unchanged files.
-  * Bug fix: When a user runs a lookup-names script on an XML file that does not have
-    all of its component parts, it should not crash.
   * When users run the lookup-names script to generate annotated XML, they can optionally
     add tags with Oxygen history tracking comments so that changes can be reviewed and
     accepted or rejected in Oxygen.
+  * Bug fix: When a user runs a lookup-names script on an XML file that does not have
+    all of its component parts, it should not crash.
+  * Bug fix: When annotating XML, the script will no longer crash if --types is not restricted
+    to Person,Place,Organisation (or some subset of those three), and will warn about
+    recognized entities that cannot be inserted into the output XML.
+  * Bug fix: When annotating XML, tags will not be inserted where they are not schema valid
+    (schema validation currently only supported for EAD).
 
 0.2.1
 -----

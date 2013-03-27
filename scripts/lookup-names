@@ -207,7 +207,8 @@ configure your proxy via the HTTP_PROXY environment variable.
                                 self.args.input,
                                 track_changes=self.args.track_changes,
                                 viaf=self.args.viaf_lookup,
-                                geonames=self.args.geonames_lookup)
+                                geonames=self.args.geonames_lookup,
+                                xml_object=xmlobj)
                             annotater.annotate(node, self.last_results)
                             # util.annotate_xml(node, self.last_results, self.args.input,
                             #     self.args.track_changes)
@@ -239,7 +240,7 @@ configure your proxy via the HTTP_PROXY environment variable.
                 with open(self.args.output_file, 'w') as outfile:
                     xmlobj.serializeDocument(stream=outfile, pretty=True)
             else:
-                print >> sys.stderr, 'Updated XML file (%s) ' % self.args.output_file \
+                print >> sys.stderr, 'Annotated XML file (%s) ' % self.args.output_file \
                     + 'not created because no resources were identified'
 
     def get_names(self, text):

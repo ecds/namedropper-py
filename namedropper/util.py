@@ -14,10 +14,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from copy import deepcopy
 from datetime import datetime
 from dateutil.tz import tzlocal
 import logging
-from lxml.etree import XMLSyntaxError, parse, ProcessingInstruction
+from lxml import etree
 import re
 from namedropper import spotlight
 
@@ -34,7 +35,7 @@ def autodetect_file_type(filename):
     # attempt to auto-detect input file type
     try:
         # load as generic xml
-        generic_xml = parse(filename)
+        generic_xml = etree.parse(filename)
         root_element = generic_xml.getroot().tag
         # do a simple check on the root element (ignoring namespaces)
         if root_element.endswith('TEI'):
@@ -42,7 +43,7 @@ def autodetect_file_type(filename):
         elif root_element.endswith('ead'):
             return 'ead'
 
-    except XMLSyntaxError:
+    except etree.XMLSyntaxError:
         # Failure to parse as any kind of XML should mean text input.
         # If we need to be more fine-grained, could check error text;
         # should be something similar to this:
@@ -80,7 +81,7 @@ def enable_oxygen_track_changes(node):
     '''Add a processing instruction to a document with an OxygenXMl
     option to enable the track changes mode.
     '''
-    oxy_track_changes = ProcessingInstruction(
+    oxy_track_changes = etree.ProcessingInstruction(
         'oxy_options',
         'track_changes="on"'
     )
@@ -117,6 +118,9 @@ class AnnotateXml(object):
         URIs when  possible (optional, defaults to False)
     :param track_changes: if True, flag annotations with OxygenXML
         track changes processing instructions for later review
+    :param xml_object: :class:`eulxml.xmlmap.XmlObject` for the top-level
+        XML document associated with the node(s) to be annotated.
+        Used for validation to check that inserted elements are allowed.
     '''
 
     xml_format = None
@@ -133,6 +137,8 @@ class AnnotateXml(object):
     GeoNames URIs when possible'''
 
     current_node = None
+    xml_object = None
+    # document associated with the node being annotated
 
     track_changes = False
     '''OxygenXML track changes flag: if true, annotation will be tagged
@@ -142,7 +148,7 @@ class AnnotateXml(object):
     track_changes_author = 'namedropper'
 
     def __init__(self, mode, viaf=False, geonames=False,
-                 track_changes=False):
+                 track_changes=False, xml_object=None):
         self.xml_format = mode
         # pass in xmlobj to autodetect type?+
         # TODO: list of supported modes
@@ -150,6 +156,7 @@ class AnnotateXml(object):
         self.track_changes = track_changes
         self.viaf = viaf
         self.geonames = geonames
+        self.xml_object = xml_object
 
     def get_tag(self, res):
         '''Get the name of the tag to be inserted, based on the current
@@ -283,6 +290,10 @@ class AnnotateXml(object):
                           (text, dbres.uri))
             return False
 
+        # NOTE: lxml doesn't provide detailed schema information like
+        # which elements are valid inside another element,
+        # so that can't be tested here.
+
         return True
 
     def annotate(self, node, annotations):
@@ -372,6 +383,12 @@ class AnnotateXml(object):
 
                 else:
                     existing_tag = False
+
+                    # make a backup copy before modifying anything,
+                    # in case inserted node is invalid and we need to restore
+                    original_node = text_node.getparent().getparent()
+                    backup_original = deepcopy(original_node)
+
                     # update current text node with the text before the item
                     if text_node == text_node.getparent().text:
                         text_node.getparent().text = text_before
@@ -393,6 +410,29 @@ class AnnotateXml(object):
                     # otherwise, just append at the end of the parent node
                     else:
                         parent_node.append(item_tag)
+
+                    # check that the new node is allowed in this context
+                    if self.xml_object is not None and \
+                            self.xml_object.XSD_SCHEMA is not None and \
+                            not self.xml_object.schema_valid():
+
+                        # NOTE: currently the only way to check if an added tag
+                        # is allowed is to validate after inserting.
+                        # This is almost certainly not the most efficient
+                        # way to handle this.
+
+                        logger.warning('Not tagging "%s" as %s because %s is not allowed inside %s' %
+                                      (item_tag.text, dbres.uri, item_tag.xpath('local-name()'),
+                                       parent_node.xpath('local-name()')))
+
+                        # replace modified node with the backup copy
+                        ancestor_node = original_node.getparent()
+                        ancestor_node.replace(original_node, backup_original)
+
+                        # clear this item and skip to the next one
+                        item = None
+                        continue
+
                     inserted += 1  # update item tag count
 
                     if self.track_changes:
@@ -472,7 +512,7 @@ class AnnotateXml(object):
         timestamp = self.track_changes_timestamp()
 
         # create a delete marker for the old text
-        oxy_delete = ProcessingInstruction(
+        oxy_delete = etree.ProcessingInstruction(
             'oxy_delete',
             'author="%s" timestamp="%s" content="%s"'
             % (self.track_changes_author, timestamp, old_text))
@@ -487,13 +527,13 @@ class AnnotateXml(object):
             '(label/description unavailable)'
         # convert quotes to single quotes to avoid breaking comment text
         comment = comment.replace('"', '\'')
-        oxy_insert_start = ProcessingInstruction(
+        oxy_insert_start = etree.ProcessingInstruction(
             'oxy_insert_start',
             'author="%s" timestamp="%s"' %
             (self.track_changes_author, timestamp) +
             ' comment="%s"' % comment)
         # marker for the end of the insertion
-        oxy_insert_end = ProcessingInstruction('oxy_insert_end')
+        oxy_insert_end = etree.ProcessingInstruction('oxy_insert_end')
 
         # - add deletion, then insertion start just before new tag
         parent_node = new_node.getparent()
@@ -522,12 +562,12 @@ class AnnotateXml(object):
                 ('s' if len(attributes) - len(added_attr) != 1 else '') + \
                 ', '.join('%s=%s with %s' % (k, node.get(k), v)
                 for k, v in attributes.iteritems() if k not in added_attr)
-        oxy_comment_start = ProcessingInstruction(
+        oxy_comment_start = etree.ProcessingInstruction(
             'oxy_comment_start',
             'author="%s" timestamp="%s"' %
             (self.track_changes_author, timestamp) +
             ' comment="%s"' % comment)
-        oxy_comment_end = ProcessingInstruction('oxy_comment_end')
+        oxy_comment_end = etree.ProcessingInstruction('oxy_comment_end')
         parent_node = node.getparent()
         parent_node.insert(parent_node.index(node),
                            oxy_comment_start)
@@ -707,7 +747,7 @@ def OLDannotate_xml(node, result, mode='tei', track_changes=False):
                     # relative to the new node that was just inserted
 
                     # create a delete marker for the old text
-                    oxy_delete = ProcessingInstruction(
+                    oxy_delete = etree.ProcessingInstruction(
                         'oxy_delete',
                         'author="namedropper" timestamp="%s" content="%s"'
                         % (timestamp, item['surfaceForm']))
@@ -720,12 +760,12 @@ def OLDannotate_xml(node, result, mode='tei', track_changes=False):
                     # or is already in the document in another form)
                     comment = dbres.description or dbres.label or \
                         '(label/description unavailable)'
-                    oxy_insert_start = ProcessingInstruction(
+                    oxy_insert_start = etree.ProcessingInstruction(
                         'oxy_insert_start',
                         'author="namedropper" timestamp="%s"' % timestamp +
                         ' comment="%s"' % comment)
                     # marker for the end of the insertion
-                    oxy_insert_end = ProcessingInstruction('oxy_insert_end')
+                    oxy_insert_end = etree.ProcessingInstruction('oxy_insert_end')
 
                     # - add deletion, then insertion start just before new tag
                     parent_node.insert(parent_node.index(item_tag), oxy_delete)
@@ -824,11 +864,11 @@ def OLDannotate_xml(node, result, mode='tei', track_changes=False):
                         ('s' if len(attributes) - len(added_attr) != 1 else '') + \
                         ', '.join('%s=%s with %s' % (k, name_node.get(k), v)
                         for k, v in attributes.iteritems() if k not in added_attr)
-                oxy_comment_start = ProcessingInstruction(
+                oxy_comment_start = etree.ProcessingInstruction(
                     'oxy_comment_start',
                     'author="namedropper" timestamp="%s"' % timestamp +
                     ' comment="%s"' % comment)
-                oxy_comment_end = ProcessingInstruction('oxy_comment_end')
+                oxy_comment_end = etree.ProcessingInstruction('oxy_comment_end')
                 name_parent = name_node.getparent()
                 name_parent.insert(name_parent.index(name_node),
                                    oxy_comment_start)
