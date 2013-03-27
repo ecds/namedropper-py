@@ -198,7 +198,7 @@ def cached_property(f):
 
 
 # FIXME: maybe store on DBpediaResource class object?
-#_viafids = {}
+_viaf_uris = {}
 '''dictionary mapping dbpedia URIs to VIAF ids, to avoid repeat lookups
 within the same session'''
 
@@ -240,6 +240,12 @@ class DBpediaResource(object):
         g.load(self.uri)   # NOTE: not documented; actually calls parse
         logger.debug('Loaded RDF for %s (%0.3fs)' %
                     (self.uri, time.time() - start))
+        # NOTE: this is fairly slow for some resources (e.g., places like
+        # London or United States which include data about lots of people
+        # associated with that place).
+        # Might be better to do generate a graph via a targeted
+        # sparql query...
+
         return g
 
     @cached_property
@@ -294,6 +300,9 @@ class DBpediaResource(object):
             # search for corresponding viaf resource by type
 
             if self.is_person:
+                if self.uri in _viaf_uris:
+                    return _viaf_uris[self.uri]
+
                 # NOTE: only persons in VIAF have the dbpedia sameAs rel
                 # For now, only implementing person-name VIAF lookup
                 logger.info('VIAF id for %s not found in DBpedia; searching VIAF' %
@@ -301,19 +310,20 @@ class DBpediaResource(object):
                 viafclient = viaf.ViafClient()
                 results = viafclient.find_person(self.label)
 
-            g = rdflib.Graph()
+                g = rdflib.Graph()
 
-            # iterate through results and look for a result that has
-            # an owl:sameAs relation to the dbpedia resource
-            for result in results:
-                viaf_uriref = rdflib.URIRef(result['link'])
-                # load the RDF for the VIAF entity and parse a s an rdflib graph
-                g.parse(result['link'])
-                # check for the triple we're interested in
-                if (viaf_uriref, OWL['sameAs'], self.uriref) in g:
-                    viaf_uri = result['link']
-                    #_viafids[self.uri] = viaf_uri
-                    return viaf_uri
+                # iterate through results and look for a result that has
+                # an owl:sameAs relation to the dbpedia resource
+                for result in results:
+                    viaf_uriref = rdflib.URIRef(result['link'])
+                    # load the RDF for the VIAF entity and parse a s an rdflib graph
+                    g.parse(result['link'])
+                    # check for the triple we're interested in
+                    if (viaf_uriref, OWL['sameAs'], self.uriref) in g:
+                        viaf_uri = result['link']
+                        # store in case we need to look up again
+                        _viaf_uris[self.uri] = viaf_uri
+                        return viaf_uri
 
     #return _viafids.get(res.uri, None)
 

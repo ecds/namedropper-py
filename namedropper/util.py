@@ -180,7 +180,7 @@ class AnnotateXml(object):
                 (self.current_node.nsmap[self.current_node.prefix], tag)
         return tag
 
-    def get_attributes(self, res):
+    def get_attributes(self, res, quiet=False):
         '''Get the attributes to be inserted, based on the current
         document mode and the type of DBpediaResource.
 
@@ -188,15 +188,15 @@ class AnnotateXml(object):
         :returns: dictionary of attribute names -> values
         '''
         if self.xml_format == 'tei':
-            return self.get_tei_attributes(res)
+            return self.get_tei_attributes(res, quiet)
         if self.xml_format == 'ead':
-            return self.get_ead_attributes(res)
+            return self.get_ead_attributes(res, quiet)
 
     def get_tei_tag(self, res):
         # TEI tags will all use name
         return 'name'
 
-    def get_tei_attributes(self, res):
+    def get_tei_attributes(self, res, quiet=False):
         tei_type = None
         if res.is_person:
             tei_type = 'person'
@@ -211,14 +211,14 @@ class AnnotateXml(object):
         if self.viaf and res.is_person:
             if res.viaf_uri is not None:
                 uri = res.viaf_uri
-            else:
+            elif not quiet:
                 logger.info('VIAF URI not found for %s' % res.label)
 
         # if enabled, use geonames uri for places
         if self.geonames and res.is_place:
             if res.geonames_uri is not None:
                 uri = res.geonames_uri
-            else:
+            elif not quiet:
                 logger.info('GeoNames.org URI not found for %s' % res.label)
 
         return {'type': tei_type, 'ref': uri}
@@ -241,7 +241,7 @@ class AnnotateXml(object):
 
         return tag
 
-    def get_ead_attributes(self, res):
+    def get_ead_attributes(self, res, quiet):
         attributes = {}
 
         # use viaf for persons if configured
@@ -251,7 +251,7 @@ class AnnotateXml(object):
                 viafid = res.viafid
             elif res.viaf_uri:
                 viafid = res.viaf_uri.rstrip('/').rsplit('/', 1)[-1]
-            else:
+            elif not quiet:
                 logger.info('VIAF id not found for %s' % res.label)
 
             if viafid:
@@ -264,7 +264,7 @@ class AnnotateXml(object):
             if res.geonames_id is not None:
                 attributes = {'source': 'geonames',
                               'authfilenumber': res.geonames_id}
-            else:
+            elif not quiet:
                 logger.info('GeoNames.org id not found for %s' %
                             res.label)
 
@@ -285,7 +285,7 @@ class AnnotateXml(object):
 
         # first: can we create a tag / attributes for this item?
         if (self.xml_format == 'ead' and self.get_tag(dbres) is None) or \
-           (self.xml_format == 'tei' and self.get_attributes(dbres)['type'] is None):
+           (self.xml_format == 'tei' and self.get_attributes(dbres, quiet=True)['type'] is None):
             logger.warning('Not tagging "%s" as %s (name type not supported or could not be determined)' %
                           (text, dbres.uri))
             return False
