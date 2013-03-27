@@ -3,7 +3,6 @@
 requests
 eulxml
 rdflib
-SPARQLWrapper
 feedparser
 unicodecsv
 python-dateutil
