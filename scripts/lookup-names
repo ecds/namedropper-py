@@ -125,6 +125,19 @@ class LookupNames(scripts.ScriptBase):
 
         # check and warn if no proxy is set
         if 'HTTP_PROXY' not in os.environ:
+
+            # if an output file is requested, this an error because
+            # output requires validation which currently requires
+            # an http proxy
+            if self.args.output_file:
+                error = '''
+ERROR: A web proxy is currently required in order to generate and validate
+an annotated XML output file.  You should configure a proxy via the
+HTTP_PROXY environment variable.
+'''
+                print >> sys.stderr, error
+                exit(-1)
+
             warning = '''
 WARNING: It is recommended to use a web proxy to improve performance
 and reduce the load on external services.  If possible, you should
