@@ -1,4 +1,4 @@
-sScripts
+Scripts
 =======
 
 :mod:`namedropper` command-line scripts
@@ -82,6 +82,10 @@ the minimum support score).  It is also recommended to restrict the types to
 persons, places, and organizations (i.e., use ``--types Person,Place,Organisation``).
 You should, of course, carefully review changes made to the output file before accepting
 or using them.
+
+.. warning::
+
+  A web proxy is currently **required** for generating an output XML file.
 
 .. Note::
 
