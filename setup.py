@@ -46,12 +46,12 @@ CLASSIFIERS = [
 # NOTE: a separate requirements file is needed for readthedocs.org
 # If you add something here, you must also add it to pip-install-req.txt
 install_requires = [
-    'requests',
+    'requests>=1.1.0',
     'eulxml',
     'rdflib',
-    'SPARQLWrapper',
     'feedparser',
-    'unicodecsv'
+    'unicodecsv==0.9.0',  # NOTE: temporary; 0.9.3 install is broken
+    'python-dateutil',
 ]
 
 extras_require = {
@@ -84,5 +84,6 @@ setup(
     classifiers=CLASSIFIERS,
     scripts=[
         'scripts/lookup-names',
+        'scripts/count-nametags',
     ],
 )

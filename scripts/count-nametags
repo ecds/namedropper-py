@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+from eulxml.xmlmap.eadmap import EAD_NAMESPACE
+from eulxml.xmlmap.teimap import TEI_NAMESPACE
+import sys
+
+from namedropper import scripts
+
+
+class CountNameTags(scripts.ScriptBase):
+    'Count tagged personal, corporate, and geographic names in an XML document'
+
+    # inheriting default arguments
+
+    def run(self):
+        if self.args.input == 'tei':
+            print >> sys.stderr, 'TEI is not yet supported'
+            exit(-1)
+
+        xmlobj = self.init_xml_object()
+        # common xpath arguments to declare ead namespace
+        xp_args = {'namespaces': {'e': EAD_NAMESPACE, 't': TEI_NAMESPACE}}
+
+        # shortcut method for running an xpath query
+        def xp(xpath):
+            return xmlobj.node.xpath(xpath, **xp_args)
+
+        info = {}
+        # total counts
+        info['personal'] = xp('count(.//e:persname)')
+        info['corporate'] = xp('count(.//e:corpname)')
+        info['geographic'] = xp('count(.//e:geogname)')
+
+        summary = '%(personal)d personal names \n' + \
+                '%(corporate)d corporate names \n' + \
+                '%(geographic)d geographic names \n'
+        print summary % info
+
+        # totals with authority source & number
+
+        # get a unique list of authority source names (e.g., viaf)
+        # - using set because lxml xpath doesn't support distinct-values
+        name_sources = set(xp('.//e:persname[@authfilenumber]/@source|' + \
+            './/e:corpname[@authfilenumber]/@source|' + \
+            './/e:geogname[@authfilenumber]/@source'))
+
+        types = {
+            'persname': 'personal',
+            'corpname': 'corporate',
+            'geogname': 'geographic'
+        }
+
+        if name_sources:
+            print 'Names with authority control:'
+
+            # total count of names by authority source
+            for src in name_sources:
+                # filter each name type by source attribute
+                sf = '[@source = "%s"]' % src
+                count = xp('count(.//e:persname%s|' % sf + \
+                    './/e:corpname%s|.//e:geogname%s)' % (sf, sf))
+                print '  %s: %d' % (src, count)
+
+                # total unique identifiers for this source per name type
+                for name_type, name_label in types.iteritems():
+                    unique_ids = set(xp('.//e:%s%s/@authfilenumber' \
+                        % (name_type, sf)))
+                    if unique_ids:
+                        print '    %d unique %s identifiers' % \
+                            (len(unique_ids), name_label)
+
+
+if __name__ == '__main__':
+    CountNameTags()

@@ -18,4 +18,9 @@ util
 .. automodule:: namedropper.util
     :members:
 
+scripts
+-------
+.. automodule:: namedropper.scripts
+    :members:
+
 

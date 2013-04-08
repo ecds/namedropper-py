@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-
 # file namedropper-py/test/test_spotlight.py
+# coding=utf-8
 #
 #   Copyright 2012 Emory University Library
 #
@@ -16,10 +15,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import unittest
-from mock import patch, Mock
+import os.path
+import rdflib
 
-from namedropper.spotlight import SpotlightClient
+import unittest
+from mock import patch
+
+from namedropper.spotlight import SpotlightClient, DBpediaResource
 
 
 @patch('namedropper.spotlight.requests')
@@ -79,7 +81,7 @@ class SpotlightClientTest(unittest.TestCase):
         # simulate ok response
         mockrequests.get.return_value.status_code = 200
         mockrequests.codes.ok = 200
-        mockrequests.get.return_value.json = self.sample_result
+        mockrequests.get.return_value.json.return_value = self.sample_result
         result = client.annotate(text)
 
         self.assertEqual(client._clean_response(self.sample_result), result)
@@ -95,3 +97,87 @@ class SpotlightClientTest(unittest.TestCase):
         # TODO: test larger text / post
 
         # TODO: simulate error
+
+
+class DBpediaResourceTest(unittest.TestCase):
+    URI = {
+        'heaney': 'http://dbpedia.org/resource/Seamus_Heaney',
+        'belfast': 'http://dbpedia.org/resource/Belfast'
+    }
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    FIXTURES = {
+        'heaney': os.path.join(BASE_DIR, 'fixtures', 'Seamus_Heaney.rdf'),
+        'belfast': os.path.join(BASE_DIR, 'fixtures', 'belfast.rdf'),
+    }
+
+    SPOTLIGHT_INFO = {
+        "URI": "http://dbpedia.org/resource/Edgar_Lee_Masters",
+        "support": "98",
+        "types": "DBpedia:Writer,DBpedia:Artist,DBpedia:Person,Schema:Person,Freebase:/book/author,Freebase:/book,Freebase:/award/award_winner,Freebase:/award,Freebase:/people/deceased_person,Freebase:/people,Freebase:/award/award_nominee,Freebase:/people/person",
+        "surfaceForm": "masters",
+        "offset": "315",
+        "similarityScore": "0.171113520860672",
+        "percentageOfSecondRank": "0.6365209051735774"
+    }
+
+    def test_init(self):
+        res = DBpediaResource(self.URI['heaney'])
+        self.assertEqual(self.URI['heaney'], res.uri)
+        self.assertEqual(rdflib.URIRef(self.URI['heaney']), res.uriref)
+        self.assertEqual('Seamus_Heaney', res.id)
+        self.assertEqual('en', res.language)
+
+        res = DBpediaResource(self.URI['heaney'], 'ja')
+        self.assertEqual('ja', res.language)
+
+        # test init with spotlight info
+        with patch('namedropper.spotlight.rdflib') as mockrdflib:
+            res = DBpediaResource(self.SPOTLIGHT_INFO['URI'],
+                                  spotlight_info=self.SPOTLIGHT_INFO)
+            self.assertEqual(True, res.is_person)
+            self.assert_(not mockrdflib.graph.ConjunctiveGraph.called,
+                         'rdflib.graph should not be loaded when ' +
+                         'types are available via spotlight info')
+
+    def test_rdf_properties(self):
+        g = rdflib.graph.Graph()
+        g.load(self.FIXTURES['heaney'])
+
+        # patch in local fixture to avoid hitting dbpedia
+        with patch.object(DBpediaResource, 'graph', new=g):
+            sh = DBpediaResource(self.URI['heaney'])
+            self.assertEqual('Seamus Heaney', sh.label)
+            self.assertEqual(109557338, sh.viafid)
+            self.assertEqual(None, sh.latitude)
+            self.assertEqual(None, sh.longitude)
+            self.assertEqual(True, sh.is_person)
+            # beginning of english rdfs:comment
+            en_desc = 'Seamus Heaney is an Irish poet, playwright, translator,'
+            self.assert_(sh.description.startswith(en_desc))
+
+            sh = DBpediaResource(self.URI['heaney'], 'ja')
+            self.assertNotEqual('Seamus Heaney', sh.label)
+
+            # beginning of french rdfs:comment
+            fr_desc = u'Seamus Heaney est un poète irlandais'
+            sh = DBpediaResource(self.URI['heaney'], 'fr')
+            self.assert_(sh.description.startswith(fr_desc))
+
+            # non-place should not error but return none for geonames
+            self.assertEqual(None, sh.geonames_uri)
+            self.assertEqual(None, sh.geonames_id)
+
+        g.load(self.FIXTURES['belfast'])
+        with patch.object(DBpediaResource, 'graph', new=g):
+            sh = DBpediaResource(self.URI['belfast'])
+            self.assertEqual('Belfast', sh.label)
+            self.assertEqual(None, sh.viafid)
+            self.assertAlmostEqual(54.596, sh.latitude, places=2)
+            self.assertAlmostEqual(-5.930, sh.longitude, places=2)
+            self.assertEqual(False, sh.is_person)
+
+            self.assertEqual('http://sws.geonames.org/3333223/',
+                sh.geonames_uri)
+            self.assertEqual('3333223', sh.geonames_id)
+

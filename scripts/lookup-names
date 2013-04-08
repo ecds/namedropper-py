@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 
 import argparse
-from eulxml.xmlmap import load_xmlobject_from_file
-from eulxml.xmlmap.eadmap import EncodedArchivalDescription as EAD
-from eulxml.xmlmap.teimap import Tei, TEI_NAMESPACE
+from eulxml.xmlmap.teimap import TEI_NAMESPACE
+import logging
+from logging import config as logging_config
+import os
 from requests.exceptions import HTTPError
+import signal
 import sys
 import unicodecsv
 
-from namedropper import spotlight, util
+from namedropper import spotlight, util, scripts, LOGGING_CONFIG
+
+
 
 
 class LowerCaseAction(argparse.Action):
@@ -17,35 +21,43 @@ class LowerCaseAction(argparse.Action):
         setattr(namespace, self.dest, value.lower())
 
 
-class LookupNames(object):
-    # object to wrap script functionality
+class LookupNames(scripts.ScriptBase):
+    'Look up named entities in a file.'
 
     _queried_text = set()
-
     _unique_names = set()
 
     # number of characters on either side of an entity in the
     # text to include in the context of the csv_file
     __context_pad = 100
 
-    def __init__(self):
-        # parse command-line arguments and init spotlight client
-        parser = argparse.ArgumentParser(description='Look up named entities in a file.')
-        parser.add_argument('filename', metavar='INPUT_FILE', type=str,
-            help='name of the file to be processed')
-        parser.add_argument('--input', metavar='INPUT_TYPE', type=str,
-            help='type of file to be processed (%(choices)s)',
-            action=LowerCaseAction,
-            choices=['EAD', 'ead', 'tei', 'TEI', 'text'])
+    total = 0
+    # total number of resources identified
+
+    # interrupt flag to exit the main processing loop when a signal is caught
+    interrupted = False
+
+    def init_parser(self):
+        parser = super(LookupNames, self).init_parser()
+        # default args include filename and input type
         parser.add_argument('--unique', action='store_true',
             help='only list unique names found anywhere in the content')
         parser.add_argument('--viaf', action='store_true', dest='viaf_lookup', default=False,
             help='look up VIAF identifiers for recognized Person entities')
+        parser.add_argument('--geonames', action='store_true', dest='geonames_lookup', default=False,
+            help='look up GeoNames identifiers for recognized Place entities')
+
+        parser.add_argument('--loglevel', dest='loglevel', default='WARNING',
+            choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+            help='Set output log level (default: %(default)s)')
 
         parser.add_argument('--output', '-o', dest='output_file',
             help='''Generate an updated XML file with recognized names as the
             specified filename; it is recommended to restrict types to
             Person, Place, and/or Organisation (semi-EXPERIMENTAL)''')
+        parser.add_argument('--oxygen-track-changes', action='store_true',
+            dest='track_changes', default=False,
+            help='Use Oxygen track changes for changes made to generated XML')
         parser.add_argument('--csv', dest='csv_file',
             help=''' Generate a CSV file with recognized names, uri, similarity score, support score, and context''')
 
@@ -71,38 +83,67 @@ class LookupNames(object):
         # recognized; check if these be tagged/identified in EAD for inclusion
         # - probably do want to exclude dates (don't seem to be recognized in a useful way...)
 
-        self.args = parser.parse_args()
+        self.parser = parser
+        return parser
 
-        # auto-detect input type if not specified
-        if not self.args.input:
-            self.args.input = util.autodetect_file_type(self.args.filename)
-            # exit if we still don't have an input type
-            if not self.args.input:
-                print >> sys.stderr, 'Could not determine document input type; please specify with --input'
-                exit(-1)
-
+    def run(self):
+        # bind a handler for interrupt signal
+        signal.signal(signal.SIGINT, self.interrupt_handler)
+        # input type auto-detection handled in base class
         if self.args.input == 'tei' and not self.args.tei_xpath:
             print 'Error! --tei-xpath is required when input document is TEI\n'
-            parser.print_help()
+            self.parser.print_help()
             exit(-1)
 
         self.csv_writer = None
         if self.args.csv_file:
-            #init self.csv_writer
-            self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'), encoding="utf-8")
+            self.csv_writer = unicodecsv.writer(open(self.args.csv_file, 'wb'),
+                                                encoding="utf-8")
 
-            #early exit if we don't have csv writer
+            # early exit if we don't have csv writer
             if self.args.csv_file and not self.csv_writer:
                 print >> sys.stderr, "CSV output file could not be created"
                 exit(-1)
 
             # write the header row of the CSV file
-            # done here because in certain modes it will call populate_csv_from_results more than once
-            self.csv_writer.writerow(["Name", "URI", "Similarity Score", "Support Score", "Context"])
+            # done here because in certain modes it will call
+            # populate_csv_from_results more than once
+            self.csv_writer.writerow(["Name", "URI", "Similarity Score",
+                                      "Support Score", "Type", "Context"])
 
-        spotlight_args = {'base_url': self.args.dbpedia_url,
-            'confidence': self.args.confidence, 'support': self.args.support,
-            'types': self.args.types}
+        spotlight_args = {
+            'base_url': self.args.dbpedia_url,
+            'confidence': self.args.confidence,
+            'support': self.args.support,
+            'types': self.args.types
+        }
+
+        # configur logging based on --loglevel option
+        log_cfg = LOGGING_CONFIG.copy()
+        log_cfg['handlers']['console']['level'] = self.args.loglevel
+        logging_config.dictConfig(log_cfg)
+
+        # check and warn if no proxy is set
+        if 'HTTP_PROXY' not in os.environ:
+
+            # if an output file is requested, this an error because
+            # output requires validation which currently requires
+            # an http proxy
+            if self.args.output_file:
+                error = '''
+ERROR: A web proxy is currently required in order to generate and validate
+an annotated XML output file.  You should configure a proxy via the
+HTTP_PROXY environment variable.
+'''
+                print >> sys.stderr, error
+                exit(-1)
+
+            warning = '''
+WARNING: It is recommended to use a web proxy to improve performance
+and reduce the load on external services.  If possible, you should
+configure your proxy via the HTTP_PROXY environment variable.
+'''
+            print >> sys.stderr, warning
 
         # for now, script only has a single mode: output a list of recognized names and URIs
 
@@ -120,6 +161,8 @@ class LookupNames(object):
                 self.unique_names(text)
             else:
                 self.list_names(text)
+            # not checking interrupt flag here because not looping
+            # and making multiple annotate requests
 
         # TEI or EAD
         else:
@@ -132,6 +175,10 @@ class LookupNames(object):
                 names = set()
                 for label, text_list in self.get_xml_sections(xmlobj):
                     for txt in text_list:
+                        # if interrupt flag is set, bail out
+                        if self.interrupted:
+                            break
+
                         if txt in self._queried_text:
                                 continue
                         names.update(set([(r['surfaceForm'], r['URI']) for r in self.get_names(txt)]))
@@ -144,8 +191,11 @@ class LookupNames(object):
                 print 'Looking up names by section'
                 for label, node_list in self.get_xml_sections(xmlobj):
                     print "\n%s" % label
-                    #for txt in text_list:
                     for node in node_list:
+                        # if interrupt flag is set, bail out
+                        if self.interrupted:
+                            break
+
                         txt = node.xpath('normalize-space(.)')
                         # for EAD only, skip look-ups on exactly repeated text
                         # (e.g. "undated correspondence" or "miscellaneous invitations")
@@ -159,37 +209,52 @@ class LookupNames(object):
                         # since content is likely to be much longer and less repetitive
                         self.list_names(txt)
 
-                        # NOTE: currently only works for TEI, and only supports simple xml
                         # if output file was requested and we have results, attempt
                         # to update the lxml node with the identified resources.
-                        if self.args.output_file and self.last_results and 'Resources' in self.last_results:
-                            util.annotate_xml(node, self.last_results, self.args.input)
+                        # NOTE: not guaranteed to work for all cases of complicated xml
+                        if self.args.output_file and self.last_results \
+                                and 'Resources' in self.last_results:
+
+                            # FIXME: ideally, init annotater once on entire document
+                            annotater = util.AnnotateXml(
+                                self.args.input,
+                                track_changes=self.args.track_changes,
+                                viaf=self.args.viaf_lookup,
+                                geonames=self.args.geonames_lookup,
+                                xml_object=xmlobj)
+                            annotater.annotate(node, self.last_results)
+                            # util.annotate_xml(node, self.last_results, self.args.input,
+                            #     self.args.track_changes)
+
+                # if generating an xml file with track changes enabled,
+                # add a flag to tell Oxygen to turn on track changes for this document
+                if self.args.output_file and self.args.track_changes:
+                    util.enable_oxygen_track_changes(xmlobj.node)
 
         # Brief summary of API call activity
-        print >> sys.stderr, '\nMade %d API call%s in %s' % (self.sc.total_api_calls,
-            's' if self.sc.total_api_calls != 1 else '',
-            self.sc.total_api_duration)
+        # NOTE: this only reports spotlight annotation calls
+        # TODO: consider reporting viaf api calls, dbpedia data lookups, etc
+        print >> sys.stderr, '\nMade %d DBpedia Spotlight API call%s in %s' % \
+            (self.sc.total_api_calls,
+             's' if self.sc.total_api_calls != 1 else '',
+             self.sc.total_api_duration)
+
+        if self.args.csv_file and self.total == 0:
+            # close csv writer and remove the created file (headers only)
+            del(self.csv_writer)
+            os.remove(self.args.csv_file)
+            print >> sys.stderr, 'CSV file (%s) not created ' % self.args.csv_file \
+                + 'because no resources were identified'
 
         # if output file was specified, write out the result
-        if self.args.output_file:
-            with open(self.args.output_file, 'w') as outfile:
-                xmlobj.serializeDocument(stream=outfile, pretty=True)
-
-    def init_xml_object(self):
-        # initialize an xmlobject based on user-specified arguments
-        # for filename and type
-
-        # input arg is required, so one of these options should be valid
-        if self.args.input == 'ead':
-            xmlobj_class = EAD
-        elif self.args.input == 'tei':
-            xmlobj_class = Tei
-
-        try:
-            return load_xmlobject_from_file(self.args.filename, xmlobj_class)
-        except Exception as err:
-            print 'Error loading %s as XML: %s' % (self.args.filename, err)
-            exit(-1)
+        # - don't generate output if exiting via interrupt
+        if self.args.output_file and not self.interrupted:
+            if self.total != 0:
+                with open(self.args.output_file, 'w') as outfile:
+                    xmlobj.serializeDocument(stream=outfile, pretty=True)
+            else:
+                print >> sys.stderr, 'Annotated XML file (%s) ' % self.args.output_file \
+                    + 'not created because no resources were identified'
 
     def get_names(self, text):
         # run spotlight annotation on a text string and print out identified
@@ -226,18 +291,31 @@ class LookupNames(object):
             # normalizing whitespace for plain-text input
             context = util.normalize_whitespace(results['text'][sub_start:sub_end])
 
+            # NOTE: it would be nice to use the DBpediaResource class
+            # here, but as currently written that would require
+            # additional http requests instead of using the annotation result
+            rsrc_type = ''
+            if util.is_person(result):
+                rsrc_type = 'person'
+            elif util.is_org(result):
+                rsrc_type = 'organization'
+            elif util.is_place(result):
+                rsrc_type = 'place'
+
             self.csv_writer.writerow([
-                    result['surfaceForm'],
-                    result['URI'],
-                    result['similarityScore'],
-                    result['support'],
-                    context
-                ])
+                result['surfaceForm'],
+                result['URI'],
+                result['similarityScore'],
+                result['support'],
+                rsrc_type,
+                context
+            ])
 
     def list_names(self, text):
         # run spotlight annotation on a text string and print out identified
         # resources
         results = self.get_names(text)
+        self.total += len(results)
 
         if not results:
             print 'No resources identified'
@@ -245,11 +323,17 @@ class LookupNames(object):
         else:
             for resource in results:
                 self.print_name(resource['surfaceForm'], resource['URI'],
-                    resource['similarityScore'], resource['support'])
-                if self.args.viaf_lookup:
-                    viafid = util.get_viafid(resource)
-                    if viafid:
-                        print '  %s' % viafid
+                                resource['similarityScore'], resource['support'])
+                dbres = spotlight.DBpediaResource(resource['URI'],
+                                                  spotlight_info=resource)
+                if self.args.viaf_lookup and dbres.is_person:
+                    #viafid = util.get_viafid(resource)
+                    if dbres.viaf_uri:
+                        print '  %s' % dbres.viaf_uri
+
+                if self.args.geonames_lookup and dbres.is_place:
+                    if dbres.geonames_uri:
+                        print '  %s' % dbres.geonames_uri
 
         # NOTE: dbpedia annotate result is per offset within the text, so
         # may include duplicates - e.g., different "surfaceForm" text variants
@@ -278,21 +362,29 @@ class LookupNames(object):
     def get_ead_sections(self, ead):
         # generator: returns tuples of section label, list of NODES
 
-        # biographical statement
-        yield (unicode(ead.archdesc.biography_history.head),
-            [p.node for p in ead.archdesc.biography_history.content])
-        # note: beware that using unicode on xmlmap elements normalizes whitespace
-        # (good for lookup, bad for annotating original xml)
+
+        if ead.archdesc and ead.archdesc.biography_history:
+            # biographical statement
+            yield (unicode(ead.archdesc.biography_history.head),
+                [p.node for p in ead.archdesc.biography_history.content])
+            # note: beware that using unicode on xmlmap elements normalizes whitespace
+            # (good for lookup, bad for annotating original xml)
+        else:
+            print >> sys.stderr, '  Warning: collection level biography/history (archdesc/bioghist) not found'
 
         # return sections for series/subseries
-        if ead.dsc.c and ead.dsc.c[0].c:
-            for c01 in ead.dsc.c:
-                for section in self.get_ead_component_sections(c01):
-                    yield section
-        # return elements for findingaid with a single container list
+        if ead.dsc:
+            if ead.dsc.c and ead.dsc.c[0].c:
+                for c01 in ead.dsc.c:
+                    for section in self.get_ead_component_sections(c01):
+                        yield section
+            # return elements for findingaid with a single container list
+            else:
+                yield ('Container List',
+                    [c.did.unittitle.node for c in ead.dsc.c])
+
         else:
-            yield ('Container List',
-                [c.did.unittitle.node for c in ead.dsc.c])
+            print >> sys.stderr, '  Warning: Description of Subordinate Components (dsc) not found'
 
     def get_ead_component_sections(self, cseries):
         # recursive generator for c01/c02 series/subseries elements
@@ -333,6 +425,20 @@ class LookupNames(object):
 
     _viafids = {}
     _dbpedia_viaf_lookups = []
+
+    def interrupt_handler(self, signum, frame):
+        '''Gracefully handle a SIGINT, if possible. Sets a flag so main script
+        loop can exit cleanly, and restores the default SIGINT behavior,
+        so that a second interrupt will stop the script.
+        '''
+        if signum == signal.SIGINT:
+            # restore default signal handler so a second SIGINT can be used to quit
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            # set interrupt flag so main loop knows to quit at a reasonable time
+            self.interrupted = True
+            # report if script is in the middle of an object
+            print >> sys.stderr, '\nScript will exit after processing the current request.'
+            print >> sys.stderr, '(Ctrl-C / Interrupt again to quit immediately)\n'
 
 
 if __name__ == '__main__':

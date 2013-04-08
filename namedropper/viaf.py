@@ -1,5 +1,5 @@
 # file namedropper-py/namedropper/viaf.py
-# 
+#
 #   Copyright 2012 Emory University Library
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,12 @@
 #   limitations under the License.
 
 
-import requests
 import feedparser
+import logging
+import requests
+import time
+
+logger = logging.getLogger(__name__)
 
 
 class ViafClient(object):
@@ -33,9 +37,15 @@ class ViafClient(object):
     def autosuggest(self, term):
         'Query autosuggest API.  Returns a list of results.'
         #    'viaf/AutoSuggest?query=[searchTerms]&callback[optionalCallbackName]
+        start = time.time()
         autosuggest_url = '%s/viaf/AutoSuggest' % self.base_url
-        response = requests.get(autosuggest_url, params={'query': term},
-            headers={'accept': 'application/json'})
+        response = requests.get(autosuggest_url,
+                                params={'query': term},
+                                headers={'accept': 'application/json'})
+        logger.debug('autosuggest \'%s\': %s, %0.2f sec' %
+                     (term, response.status_code, time.time() - start))
+        # NOTE: may be able to use response.elapsed in next version
+        # of python-requests (>1.1.0)
         if response.status_code == requests.codes.ok:
             return response.json['result']
 
@@ -51,6 +61,7 @@ class ViafClient(object):
         :param query: CQL query in viaf syntax (e.g., ``cql.any all "term"``)
 
         '''
+        start = time.time()
         search_url = '%s/viaf/search' % self.base_url
         # local.names ?
         params = {
@@ -58,9 +69,11 @@ class ViafClient(object):
             'httpAccept': 'application/rss+xml',
             'maximumRecords': 100,   # TODO: param?
             'sortKeys': 'holdingscount'  # default sort on web search...
-            }
+        }
 
         response = requests.get(search_url, params=params)
+        logger.debug('query \'%s\': %s, %0.2f sec' %
+                     (query, response.status_code, time.time() - start))
         if response.status_code == requests.codes.ok:
             feed_data = feedparser.parse(response.content)
             return feed_data.entries
@@ -82,5 +95,3 @@ class ViafClient(object):
     def find_place(self, name):
         'Search VIAF by local.geographicNames'
         return self._find_type('local.geographicNames', name)
-
-

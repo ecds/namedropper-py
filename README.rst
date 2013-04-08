@@ -1,8 +1,15 @@
 name-dropper scripts
 ====================
 
+.. image:: https://travis-ci.org/emory-libraries-disc/namedropper-py.png?branch=develop
+  :alt: current build status for namedropper-py
+  :target: https://travis-ci.org/emory-libraries-disc/namedropper-py
+
 Python scripts and utilities for looking up names and linking them to
-authoritative identifiers.
+authoritative identifiers.  See the top-level `namedropper`_ repository
+for more information.
+
+.. _namedropper: https://github.com/emory-libraries-disc/name-dropper
 
 Currently uses `DBpedia Spotlight`_ for recognition of named entities in text,
 with support for matching identified DBpedia resources (currently only for
@@ -20,10 +27,17 @@ to install the latest released version of this package and its dependencies::
 
     pip install namedropper
 
-This will also make the ``lookup-names`` script available.
+This will also make the ``lookup-names`` and ``count-nametags`` scripts available.
 
 More detailed documentation, including script usage information, is available
 at http://namedropper.readthedocs.org/
+
+
+License
+=======
+NameDropper Python module and scripts are distributed under the
+`Apache 2.0 License <http://www.apache.org/licenses/LICENSE-2.0>`_.
+
 
 Developer notes
 ---------------
@@ -31,7 +45,7 @@ Developer notes
 To install dependencies for your local check out of the code, run ``pip install``
 in the ``namedropper-py`` directory (the use of `virtualenv`_ is recommended)::
 
-    pip install .
+    pip install -e .
 
 .. _virtualenv: http://www.virtualenv.org/en/latest/
 
