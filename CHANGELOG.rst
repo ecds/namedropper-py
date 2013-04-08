@@ -36,6 +36,8 @@ any necessary information about installation or upgrade notes.
     recognized entities that cannot be inserted into the output XML.
   * Bug fix: When annotating XML, tags will not be inserted where they are not schema valid
     (schema validation currently only supported for EAD).
+  * Bug fix: If output XML is requested but an HTTP Proxy is not configured, the script will halt and
+    information about setting a proxy, instead of crashing when attempting to validate the output XML.
 
 0.2.1
 -----
