@@ -5,6 +5,12 @@ The following is a summary of changes and improvements to
 :mod:`namedropper`.  New features in each version should be listed, with
 any necessary information about installation or upgrade notes.
 
+0.3.1
+-----
+
+* Corrected CSV output of **lookup-names** script, which was broken in
+  in 0.3.0.
+
 0.3
 ---
 
