@@ -460,7 +460,7 @@ class AnnotateXml(object):
 
                     # add attribute values if they are not already set
                     if current_val is None:
-                        name_node.set(attr, val)
+                        name_node.set(attr, unicode(val))
                         added_attr[attr] = val
 
                     # Warn and do NOT set if attributes are present (and different)
