@@ -1,15 +1,15 @@
 name-dropper scripts
 ====================
 
-.. image:: https://travis-ci.org/emory-libraries-disc/namedropper-py.png?branch=develop
+.. image:: https://travis-ci.org/emory-libraries-ecds/namedropper-py.svg?branch=develop
   :alt: current build status for namedropper-py
-  :target: https://travis-ci.org/emory-libraries-disc/namedropper-py
+  :target: https://travis-ci.org/emory-libraries-ecds/namedropper-py
 
 Python scripts and utilities for looking up names and linking them to
 authoritative identifiers.  See the top-level `namedropper`_ repository
 for more information.
 
-.. _namedropper: https://github.com/emory-libraries-disc/name-dropper
+.. _namedropper: https://github.com/emory-libraries-ecds/name-dropper
 
 Currently uses `DBpedia Spotlight`_ for recognition of named entities in text,
 with support for matching identified DBpedia resources (currently only for
